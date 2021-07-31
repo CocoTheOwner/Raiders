@@ -1,0 +1,19 @@
+name: Raiders Blank Report
+description: File a blank report for Raiders.
+labels: [blank]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill this out!
+  - type: textarea
+    id: text
+    attributes:
+      label: Report
+      description: Please give a text description of what you would like to report
+    validations:
+      required: true
+  - type: markdown
+    id: thanks
+    attributes:
+      value: "Thank you for filling out the form! I will be with you soon. Please do not ask to have your report reviewed."
