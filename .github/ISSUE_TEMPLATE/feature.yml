@@ -43,4 +43,4 @@ body:
   - type: markdown
     id: thanks
     attributes:
-      value: "Thank you for filling out the form! We will be with you soon. Please do not ask support to review your report."
+      value: "Thank you for filling out the form! I will be with you soon. Please do not ask to have your report reviewed."
