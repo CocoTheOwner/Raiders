@@ -1,5 +1,5 @@
 name: Raiders Feature Request
-description: File a feature request for Raiders. If you want to report a bug, [create a bug report](./new?assignees=&labels=bug&template=bug.yml)
+description: File a feature request for Raiders. Do not report bugs through this format.
 labels: [feature]
 body:
   - type: markdown
