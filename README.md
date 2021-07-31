@@ -1,4 +1,4 @@
 Raiders
 *Bedware the raids!*
 
-[Wiki & Plugin introduction](./wiki)
+[Wiki & Plugin introduction](./../../wiki)
