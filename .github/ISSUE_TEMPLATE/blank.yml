@@ -6,6 +6,7 @@ body:
     attributes:
       value: |
         Thank you for taking the time to fill this out!
+        If this is still not "blank" enough, use a [truly empty report](./../issues/new).
   - type: textarea
     id: text
     attributes:
