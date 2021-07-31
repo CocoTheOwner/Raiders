@@ -1,0 +1,69 @@
+name: Raiders Bug Report
+description: File a bug report for Raiders.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill this out!
+        If this does not work for you, feel free to use the [blank](./new) format.
+  - type: textarea
+    id: how
+    attributes:
+      label: Problem
+      description: Please give a text description of how you reached the problem
+      value: |
+        1. Install Raiders...
+        2. Do this...
+        3. Do that...
+        4. Observe the error...
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Solution
+      description: Explain where you think the problem comes from (optional)
+      placeholder: The code to do a is missing b and c...
+    validations:
+      required: false
+  - type: dropdown
+    id: mcversion
+    attributes:
+      label: Minecraft Version
+      description: What version of Minecraft is the server on?
+      options:
+        - 1.17.x
+        - 1.18.x
+    validations:
+      required: true
+  - type: input
+    id: raiderversion
+    attributes:
+      label: Raiders Version
+      description: What version of Raiders are you running? (see console)
+      placeholder: DO NOT SAY "LATEST"
+    validations:
+      required: true
+  - type: input
+    id: logs
+    attributes:
+      label: Log
+      description: Paste a full log. Always use [mclogs](https://mclo.gs) Or [Pastebin](https://pastebin.com/). Must not be a crash report. Must be a full log. Must not be a screenshot of a log.
+      placeholder: https://mslog.gs/...
+    validations:
+      required: true
+  - type: checkboxes
+    id: checksum
+    attributes:
+      label: Checklist
+      description: Please ensure you meet each of the requirements below
+      options:
+        - label: I am using an unmodified version of Raiders. (If you modified the plugin and see an issue, make sure it is reproducable on the latest spigot version.)
+          required: true
+        - label: I am using Spigot, Paper, Tuinity, or Purpur. (If you are not, and still think it is a valid issue, do not check this. You can still send it)
+          required: false
+  - type: markdown
+    id: thanks
+    attributes:
+      value: "Thank you for filling out the form! I will be with you soon. Please do not ask to have your report reviewed."
