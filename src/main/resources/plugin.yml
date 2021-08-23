@@ -1,0 +1,12 @@
+name: ${name}
+version: ${version}
+main: ${main}
+load: STARTUP
+authors: [ CocoTheOwner ]
+website: codevs.nl
+description: Beware the raids!
+commands:
+  raiders:
+    aliases: [ raider, raid ]
+api-version: ${apiversion}
+hotload-dependencies: false
