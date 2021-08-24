@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package nl.codevs.raiders.decree;
+package nl.codevs.raiders.decree.objects;
 
 import lombok.Data;
-import nl.codevs.raiders.decree.annotations.Param;
+import nl.codevs.raiders.decree.DecreeSystem;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.util.AtomicCache;
@@ -34,11 +34,11 @@ public class DecreeParameter {
     private transient final AtomicCache<DecreeParameterHandler<?>> handlerCache = new AtomicCache<>();
 
     public DecreeParameter(Parameter parameter) {
-        this.parameter = parameter;
-        this.param = parameter.getDeclaredAnnotation(Param.class);
-        if (param == null) {
+        if (!parameter.isAnnotationPresent(Param.class)) {
             throw new RuntimeException("Cannot instantiate DecreeParameter on " + parameter.getName() + " in method " + parameter.getDeclaringExecutable().getName() + "(...) in class " + parameter.getDeclaringExecutable().getDeclaringClass().getCanonicalName() + " not annotated by @Param");
         }
+        this.parameter = parameter;
+        this.param = parameter.getDeclaredAnnotation(Param.class);
     }
 
     public DecreeParameterHandler<?> getHandler() {

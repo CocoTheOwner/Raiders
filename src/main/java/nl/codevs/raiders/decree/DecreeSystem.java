@@ -19,25 +19,27 @@
 package nl.codevs.raiders.decree;
 
 
-
 import nl.codevs.raiders.decree.exceptions.DecreeException;
 import nl.codevs.raiders.decree.handlers.*;
+import nl.codevs.raiders.decree.objects.DecreeContext;
+import nl.codevs.raiders.decree.objects.DecreeNodeExecutor;
+import nl.codevs.raiders.decree.objects.DecreeParameterHandler;
+import nl.codevs.raiders.decree.objects.DecreeVirtualCommand;
 import nl.codevs.raiders.decree.util.AtomicCache;
 import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.KList;
-import nl.codevs.raiders.decree.virtual.VirtualDecreeCommand;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface DecreeSystem extends CommandExecutor, TabCompleter {
-    AtomicCache<VirtualDecreeCommand> commandCache = new AtomicCache<>();
+public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
+    AtomicCache<DecreeVirtualCommand> commandCache = new AtomicCache<>();
     KList<DecreeParameterHandler<?>> handlers = new KList<>(
             new BlockVectorHandler(),
             new BooleanHandler(),
@@ -56,7 +58,7 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
     /**
      * The root class to start command searching from
      */
-    DecreeExecutor getRootClass();
+    DecreeNodeExecutor getRootClass();
 
     /**
      * Before you fill out these functions. Read the README.md file in the decree directory.
@@ -73,10 +75,10 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
         Bukkit.getConsoleSender().sendMessage();
     }
 
-    default VirtualDecreeCommand getRoot() {
+    default DecreeVirtualCommand getRoot() {
         return commandCache.aquire(() -> {
             try {
-                return VirtualDecreeCommand.createRoot(getRootClass(), this);
+                return DecreeVirtualCommand.createRoot(getRootClass(), this);
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -92,7 +94,7 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
 
     default List<String> decreeTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         KList<String> enhanced = new KList<>(args);
-        KList<String> v = getRoot().tabComplete(enhanced, enhanced.toString(" "));
+        KList<String> v = getRoot().tabComplete(enhanced, enhanced.toString(" "), new DecreeSender(sender, instance(), this));
         v.removeDuplicates();
         return v;
     }

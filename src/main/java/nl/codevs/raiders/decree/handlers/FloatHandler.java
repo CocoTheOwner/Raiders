@@ -19,8 +19,8 @@
 package nl.codevs.raiders.decree.handlers;
 
 
-import nl.codevs.raiders.decree.DecreeParameterHandler;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.objects.DecreeParameterHandler;
 import nl.codevs.raiders.decree.util.Form;
 import nl.codevs.raiders.decree.util.KList;
 import nl.codevs.raiders.decree.util.Maths;

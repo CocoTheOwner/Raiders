@@ -20,7 +20,7 @@ package nl.codevs.raiders.decree.util;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Locale;
 
 public class Form {
     private static NumberFormat NF;

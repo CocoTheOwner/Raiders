@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package nl.codevs.raiders.decree.virtual;
+package nl.codevs.raiders.decree.objects;
 
 import lombok.Data;
 import nl.codevs.raiders.decree.*;
-import nl.codevs.raiders.decree.annotations.Decree;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.util.*;
@@ -33,14 +32,14 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
-public class VirtualDecreeCommand {
+public class DecreeVirtualCommand {
     private final Class<?> type;
-    private final VirtualDecreeCommand parent;
-    private final KList<VirtualDecreeCommand> nodes;
+    private final DecreeVirtualCommand parent;
+    private final KList<DecreeVirtualCommand> nodes;
     private final DecreeNode node;
     private final DecreeSystem system;
 
-    private VirtualDecreeCommand(Class<?> type, VirtualDecreeCommand parent, KList<VirtualDecreeCommand> nodes, DecreeNode node, DecreeSystem system) {
+    private DecreeVirtualCommand(Class<?> type, DecreeVirtualCommand parent, KList<DecreeVirtualCommand> nodes, DecreeNode node, DecreeSystem system) {
         this.parent = parent;
         this.type = type;
         this.nodes = nodes;
@@ -48,12 +47,12 @@ public class VirtualDecreeCommand {
         this.system = system;
     }
 
-    public static VirtualDecreeCommand createRoot(Object v, DecreeSystem system) throws Throwable {
+    public static DecreeVirtualCommand createRoot(Object v, DecreeSystem system) throws Throwable {
         return createRoot(null, v, system);
     }
 
-    public static VirtualDecreeCommand createRoot(VirtualDecreeCommand parent, Object v, DecreeSystem system) throws Throwable {
-        VirtualDecreeCommand c = new VirtualDecreeCommand(v.getClass(), parent, new KList<>(), null, system);
+    public static DecreeVirtualCommand createRoot(DecreeVirtualCommand parent, Object v, DecreeSystem system) throws Throwable {
+        DecreeVirtualCommand c = new DecreeVirtualCommand(v.getClass(), parent, new KList<>(), null, system);
 
         for (Field i : v.getClass().getDeclaredFields()) {
             if (Modifier.isStatic(i.getModifiers()) || Modifier.isFinal(i.getModifiers()) || Modifier.isTransient(i.getModifiers()) || Modifier.isVolatile(i.getModifiers())) {
@@ -84,15 +83,19 @@ public class VirtualDecreeCommand {
                 continue;
             }
 
-            c.getNodes().add(new VirtualDecreeCommand(v.getClass(), c, new KList<>(), new DecreeNode(v, i), system));
+            c.getNodes().add(new DecreeVirtualCommand(v.getClass(), c, new KList<>(), new DecreeNode(v, i), system));
         }
 
         return c;
     }
 
+    public DecreeOrigin getOrigin(){
+        return isNode() ? getNode().getOrigin() : getType().getDeclaredAnnotation(Decree.class).origin();
+    }
+
     public String getPath() {
         KList<String> n = new KList<>();
-        VirtualDecreeCommand cursor = this;
+        DecreeVirtualCommand cursor = this;
 
         while (cursor.getParent() != null) {
             cursor = cursor.getParent();
@@ -139,14 +142,14 @@ public class VirtualDecreeCommand {
         return node != null;
     }
 
-    public KList<String> tabComplete(KList<String> args, String raw) {
+    public KList<String> tabComplete(KList<String> args, String raw, DecreeSender sender) {
         KList<Integer> skip = new KList<>();
         KList<String> tabs = new KList<>();
-        invokeTabComplete(args, skip, tabs, raw);
+        invokeTabComplete(args, skip, tabs, raw, sender);
         return tabs;
     }
 
-    private boolean invokeTabComplete(KList<String> args, KList<Integer> skip, KList<String> tabs, String raw) {
+    private boolean invokeTabComplete(KList<String> args, KList<Integer> skip, KList<String> tabs, String raw, DecreeSender sender) {
 
         if (isNode()) {
             tab(args, tabs);
@@ -162,11 +165,11 @@ public class VirtualDecreeCommand {
         String head = args.get(0);
 
         if (args.size() > 1 || head.endsWith(" ")) {
-            VirtualDecreeCommand match = matchNode(head, skip);
+            DecreeVirtualCommand match = matchNode(head, skip, sender);
 
             if (match != null) {
                 args.pop();
-                return match.invokeTabComplete(args, skip, tabs, raw);
+                return match.invokeTabComplete(args, skip, tabs, raw, sender);
             }
 
             skip.add(hashCode());
@@ -232,7 +235,7 @@ public class VirtualDecreeCommand {
                     }
                 }
             } else {
-                for (VirtualDecreeCommand i : getNodes()) {
+                for (DecreeVirtualCommand i : getNodes()) {
                     String m = i.getName();
                     if (m.equalsIgnoreCase(last) || m.toLowerCase().contains(last.toLowerCase()) || last.toLowerCase().contains(m.toLowerCase())) {
                         tabs.addAll(i.getNames());
@@ -343,7 +346,7 @@ public class VirtualDecreeCommand {
         }
 
         String head = args.get(0);
-        VirtualDecreeCommand match = matchNode(head, skip);
+        DecreeVirtualCommand match = matchNode(head, skip, sender);
 
         if (match != null) {
             args.pop();
@@ -444,22 +447,22 @@ public class VirtualDecreeCommand {
         return true;
     }
 
-    public KList<VirtualDecreeCommand> matchAllNodes(String in) {
-        KList<VirtualDecreeCommand> g = new KList<>();
+    public KList<DecreeVirtualCommand> matchAllNodes(String in, DecreeSender sender) {
+        KList<DecreeVirtualCommand> g = new KList<>();
 
         if (in.trim().isEmpty()) {
             g.addAll(nodes);
             return g;
         }
 
-        for (VirtualDecreeCommand i : nodes) {
-            if (i.matches(in)) {
+        for (DecreeVirtualCommand i : nodes) {
+            if (i.matches(in) && i.getOrigin().validFor(sender)) {
                 g.add(i);
             }
         }
 
-        for (VirtualDecreeCommand i : nodes) {
-            if (i.deepMatches(in)) {
+        for (DecreeVirtualCommand i : nodes) {
+            if (i.deepMatches(in) && i.getOrigin().validFor(sender)) {
                 g.add(i);
             }
         }
@@ -468,27 +471,28 @@ public class VirtualDecreeCommand {
         return g;
     }
 
-    public VirtualDecreeCommand matchNode(String in, KList<Integer> skip) {
+    public DecreeVirtualCommand matchNode(String in, KList<Integer> skip, DecreeSender sender) {
+
         if (in.trim().isEmpty()) {
             return null;
         }
 
-        for (VirtualDecreeCommand i : nodes) {
+        for (DecreeVirtualCommand i : nodes) {
             if (skip.contains(i.hashCode())) {
                 continue;
             }
 
-            if (i.matches(in)) {
+            if (i.matches(in) && i.getOrigin().validFor(sender)) {
                 return i;
             }
         }
 
-        for (VirtualDecreeCommand i : nodes) {
+        for (DecreeVirtualCommand i : nodes) {
             if (skip.contains(i.hashCode())) {
                 continue;
             }
 
-            if (i.deepMatches(in)) {
+            if (i.deepMatches(in) && i.getOrigin().validFor(sender)) {
                 return i;
             }
         }
@@ -515,7 +519,7 @@ public class VirtualDecreeCommand {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof VirtualDecreeCommand)) {
+        if (!(obj instanceof DecreeVirtualCommand)) {
             return false;
         }
         return this.hashCode() == obj.hashCode();

@@ -1,13 +1,13 @@
 package nl.codevs.raiders.decrees;
 
-import nl.codevs.raiders.decree.DecreeExecutor;
-import nl.codevs.raiders.decree.DecreeOrigin;
-import nl.codevs.raiders.decree.annotations.Decree;
-import nl.codevs.raiders.decree.annotations.Param;
+import nl.codevs.raiders.decree.objects.Decree;
+import nl.codevs.raiders.decree.objects.DecreeNodeExecutor;
+import nl.codevs.raiders.decree.objects.DecreeOrigin;
+import nl.codevs.raiders.decree.objects.Param;
 import org.bukkit.entity.Player;
 
 @Decree(name = "sub", description = "Sub commands")
-public class SubCommandClass implements DecreeExecutor {
+public class SubCommandClass implements DecreeNodeExecutor {
 
     @Decree(
             description = "Kill a player",

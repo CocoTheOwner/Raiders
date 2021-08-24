@@ -16,14 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package nl.codevs.raiders.decree;
+package nl.codevs.raiders.decree.objects;
 
 
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.util.KList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 

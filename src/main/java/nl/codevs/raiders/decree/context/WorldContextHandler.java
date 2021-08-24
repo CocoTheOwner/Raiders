@@ -18,8 +18,8 @@
 
 package nl.codevs.raiders.decree.context;
 
-import nl.codevs.raiders.decree.DecreeContextHandler;
 import nl.codevs.raiders.decree.DecreeSender;
+import nl.codevs.raiders.decree.objects.DecreeContextHandler;
 import org.bukkit.World;
 
 public class WorldContextHandler implements DecreeContextHandler<World> {

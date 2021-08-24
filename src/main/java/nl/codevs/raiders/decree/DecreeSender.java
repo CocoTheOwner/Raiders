@@ -24,11 +24,13 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import nl.codevs.raiders.decree.objects.DecreeOrigin;
+import nl.codevs.raiders.decree.objects.DecreeParameter;
+import nl.codevs.raiders.decree.objects.DecreeVirtualCommand;
 import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.Form;
 import nl.codevs.raiders.decree.util.KList;
 import nl.codevs.raiders.decree.util.Maths;
-import nl.codevs.raiders.decree.virtual.VirtualDecreeCommand;
 import org.bukkit.Server;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -287,7 +289,7 @@ public class DecreeSender implements CommandSender {
         return s.spigot();
     }
 
-    private String pickRandoms(int max, VirtualDecreeCommand command) {
+    private String pickRandoms(int max, DecreeVirtualCommand command) {
         KList<String> randoms = new KList<>();
         if (!command.isNode() || command.getNode().getParameters().isEmpty()) {
             return "";
@@ -329,7 +331,7 @@ public class DecreeSender implements CommandSender {
         sendHeader(name, 46);
     }
 
-    public void sendDecreeHelp(VirtualDecreeCommand v) {
+    public void sendDecreeHelp(DecreeVirtualCommand v) {
         int m = v.getNodes().size();
 
         if (v.getNodes().isNotEmpty()) {
@@ -338,7 +340,7 @@ public class DecreeSender implements CommandSender {
                 sendMessageRaw("<hover:show_text:'" + "<#b54b38>Click to go back to <#3299bf>" + Form.capitalize(v.getParent().getName()) + " Help" + "'><click:run_command:" + v.getParent().getPath() + "><font:minecraft:uniform><#f58571>〈 Back</click></hover>");
             }
 
-            for (VirtualDecreeCommand i : v.getNodes()) {
+            for (DecreeVirtualCommand i : v.getNodes()) {
                 sendDecreeHelpNode(i);
             }
         } else {
@@ -346,7 +348,7 @@ public class DecreeSender implements CommandSender {
         }
     }
 
-    public void sendDecreeHelpNode(VirtualDecreeCommand i){
+    public void sendDecreeHelpNode(DecreeVirtualCommand i){
         if (isPlayer()) {
 
             String newline = "<reset>\n";
@@ -356,6 +358,13 @@ public class DecreeSender implements CommandSender {
             String realText = i.getPath() + " >" + "<#46826a>⇀<gradient:#42ecf5:#428df5> " + i.getName();
             String hoverTitle = i.getNames().copy().reverse().convert((f) -> "<#42ecf5>" + f).toString(", ");
             String description = "<#3fe05a>✎ <#6ad97d><font:minecraft:uniform>" + i.getDescription();
+            DecreeOrigin origin = i.getOrigin();
+            String originText = "<#dbe61c>⌘ <#d61aba><#ff33cc><font:minecraft:uniform>" + Form.capitalize(origin.toString().toLowerCase());
+            if (origin.validFor(this)) {
+                originText += "<#0ba10b> origin, so you can run it.";
+            } else {
+                originText += "<#c4082e> origin, so you cannot run it.";
+            }
             String usage = "<#bbe03f>✒ <#a8e0a2><font:minecraft:uniform>";
             String onClick;
             if (i.isNode()) {
@@ -429,7 +438,8 @@ public class DecreeSender implements CommandSender {
                         description + newline +
                         usage +
                         suggestion + //Newlines for suggestions are added when they're built, to prevent blanklines.
-                        suggestions + // ^
+                        suggestions + newline +
+                        originText +
                     "'>" +
                     "<click:" +
                         onClick +
