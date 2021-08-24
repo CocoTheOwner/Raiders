@@ -392,7 +392,7 @@ public class DecreeSender implements CommandSender {
                     if (p.isRequired()){
                         nUsage = "<#db4321>⚠ <#faa796><font:minecraft:uniform>This parameter is required.";
                     } else if (p.hasDefault()) {
-                        nUsage = "<#2181db>✔ <#78dcf0><font:minecraft:uniform>Defaults to \""+ p.getParam().defaultValue()+"\" if undefined.";
+                        nUsage = "<#2181db>✔ <#78dcf0><font:minecraft:uniform>Defaults to <#ffa500>"+ p.getParam().defaultValue()+"<#78dcf0> if undefined.";
                     } else {
                         nUsage = "<#a73abd>✔ <#78dcf0><font:minecraft:uniform>This parameter is optional.";
                     }

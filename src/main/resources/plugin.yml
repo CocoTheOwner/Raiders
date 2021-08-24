@@ -7,6 +7,6 @@ website: codevs.nl
 description: Beware the raids!
 commands:
   raiders:
-    aliases: [ raider, raid ]
+    aliases: [ raider, raid, raids ]
 api-version: ${apiversion}
 hotload-dependencies: false

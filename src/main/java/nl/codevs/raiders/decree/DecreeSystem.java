@@ -22,6 +22,7 @@ package nl.codevs.raiders.decree;
 
 import nl.codevs.raiders.decree.exceptions.DecreeException;
 import nl.codevs.raiders.decree.handlers.*;
+import nl.codevs.raiders.decree.util.AtomicCache;
 import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.KList;
 import nl.codevs.raiders.decree.virtual.VirtualDecreeCommand;
@@ -32,11 +33,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface DecreeSystem extends CommandExecutor, TabCompleter {
+    AtomicCache<VirtualDecreeCommand> commandCache = new AtomicCache<>();
     KList<DecreeParameterHandler<?>> handlers = new KList<>(
             new BlockVectorHandler(),
             new BooleanHandler(),
@@ -55,36 +56,48 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
     /**
      * The root class to start command searching from
      */
-    VirtualDecreeCommand getRoot();
+    DecreeExecutor getRootClass();
 
     /**
+     * Before you fill out these functions. Read the README.md file in the decree directory.
+     *
      * @return The instance of the plugin that is running Decree (literal 'this')
      */
     Plugin instance();
 
     /**
-     * Debug
-     * @param message message
+     * What to do with debug messages
+     * @param message The debug message
      */
-    void debug(String message);
+    default void debug(String message) {
+        Bukkit.getConsoleSender().sendMessage();
+    }
+
+    default VirtualDecreeCommand getRoot() {
+        return commandCache.aquire(() -> {
+            try {
+                return VirtualDecreeCommand.createRoot(getRootClass(), this);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        });
+    }
 
     default boolean call(DecreeSender sender, String[] args) {
         DecreeContext.touch(sender);
         return getRoot().invoke(sender, enhanceArgs(args));
     }
 
-    @Nullable
-    @Override
-    default List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+    default List<String> decreeTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         KList<String> enhanced = new KList<>(args);
         KList<String> v = getRoot().tabComplete(enhanced, enhanced.toString(" "));
         v.removeDuplicates();
         return v;
     }
 
-
-    @Override
-    default boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    default boolean decreeCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         Bukkit.getScheduler().scheduleAsyncDelayedTask(instance(), () -> {
             if (!call(new DecreeSender(sender, instance(), this), args)) {

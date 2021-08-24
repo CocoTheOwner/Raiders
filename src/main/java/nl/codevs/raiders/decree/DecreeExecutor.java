@@ -18,6 +18,7 @@
 
 package nl.codevs.raiders.decree;
 
+import nl.codevs.raiders.decree.util.C;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
@@ -34,7 +35,19 @@ public interface DecreeExecutor {
         return sender().isPlayer() ? sender().player().getWorld() : null;
     }
 
-    default <T> T get(T v, T ifUndefined) {
-        return v == null ? ifUndefined : v;
+    default void message(String message){
+        sender().sendMessage(message);
+    }
+
+    default void error(String message){
+        sender().sendMessage(C.RED + message);
+    }
+
+    default void warn(String message){
+        sender().sendMessage(C.YELLOW + message);
+    }
+
+    default void success(String message){
+        sender().sendMessage(C.GREEN + message);
     }
 }

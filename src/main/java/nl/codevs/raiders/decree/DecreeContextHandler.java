@@ -25,14 +25,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public interface DecreeContextHandler<T> {
 
+    KList<DecreeContextHandler<?>> handlers = new KList<>(
+            new WorldContextHandler()
+    );
+
     ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> contextHandlers = buildContextHandlers();
 
     static ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> buildContextHandlers() {
         ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> contextHandlers = new ConcurrentHashMap<>();
 
-        KList<DecreeContextHandler<?>> handlers = new KList<>(
-                new WorldContextHandler()
-        );
+
 
         handlers.forEach(h -> contextHandlers.put(h.getType(), h));
 
