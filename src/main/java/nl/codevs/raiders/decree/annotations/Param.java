@@ -58,9 +58,8 @@ public @interface Param {
     String[] aliases() default "";
 
     /**
-     * Attempts to dynamically pull context from the player, default data or something else for supported types
+     * Attempts to dynamically pull context from the player, default data or something else for supported types.</br>
+     * Requires a context handler in {@link nl.codevs.raiders.decree.context}
      */
     boolean contextual() default false;
-
-    Class<? extends DecreeParameterHandler<?>> customHandler() default DummyHandler.class;
 }

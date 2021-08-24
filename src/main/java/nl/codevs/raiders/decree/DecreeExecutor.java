@@ -19,11 +19,10 @@
 package nl.codevs.raiders.decree;
 
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public interface DecreeExecutor {
-    default CommandSender sender() {
+    default DecreeSender sender() {
         return DecreeContext.get();
     }
 
@@ -31,29 +30,8 @@ public interface DecreeExecutor {
         return sender().player();
     }
 
-    default Engine engine() {
-        if (sender().isPlayer() && IrisToolbelt.access(sender().player().getWorld()) != null) {
-            PlatformChunkGenerator gen = IrisToolbelt.access(sender().player().getWorld());
-            if (gen != null) {
-                return gen.getEngine();
-            }
-        }
-
-        return null;
-    }
-
-    default PlatformChunkGenerator access() {
-        if (sender().isPlayer()) {
-            return IrisToolbelt.access(world());
-        }
-        return null;
-    }
-
     default World world() {
-        if (sender().isPlayer()) {
-            return sender().player().getWorld();
-        }
-        return null;
+        return sender().isPlayer() ? sender().player().getWorld() : null;
     }
 
     default <T> T get(T v, T ifUndefined) {

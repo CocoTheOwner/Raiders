@@ -19,21 +19,22 @@
 package nl.codevs.raiders.decree;
 
 import nl.codevs.raiders.decree.context.WorldContextHandler;
-import nl.codevs.raiders.decree.util.DecreeSender;
-import nl.codevs.raiders.decree.util.KMap;
-import org.bukkit.command.CommandSender;
+import nl.codevs.raiders.decree.util.KList;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface DecreeContextHandler<T> {
 
+    ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> contextHandlers = buildContextHandlers();
 
+    static ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> buildContextHandlers() {
+        ConcurrentHashMap<Class<?>, DecreeContextHandler<?>> contextHandlers = new ConcurrentHashMap<>();
 
-    KMap<Class<?>, DecreeContextHandler<?>> contextHandlers = buildContextHandlers();
+        KList<DecreeContextHandler<?>> handlers = new KList<>(
+                new WorldContextHandler()
+        );
 
-    static KMap<Class<?>, DecreeContextHandler<?>> buildContextHandlers() {
-        KMap<Class<?>, DecreeContextHandler<?>> contextHandlers = new KMap<>();
-
-        WorldContextHandler worldContextHandler = new WorldContextHandler();
-        contextHandlers.put(worldContextHandler.getType(), worldContextHandler);
+        handlers.forEach(h -> contextHandlers.put(h.getType(), h));
 
         return contextHandlers;
     }

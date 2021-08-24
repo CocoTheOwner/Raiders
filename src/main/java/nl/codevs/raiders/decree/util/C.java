@@ -18,10 +18,9 @@
 
 package nl.codevs.raiders.decree.util;
 
-import com.volmit.iris.Iris;
-import com.volmit.iris.util.plugin.VolmitSender;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import nl.codevs.raiders.decree.DecreeSender;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -262,7 +261,6 @@ public enum C {
     private final boolean isFormat;
     private final String toString;
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final static Map<Integer, C> BY_ID = new HashMap<>();
     private final static Map<Character, C> BY_CHAR = new HashMap<>();
     private final static Map<DyeColor, C> dyeChatMap = new HashMap<>();
     private final static Map<C, String> chatHexMap = new HashMap<>();
@@ -385,7 +383,7 @@ public enum C {
 
                 if (hrad != 0 || srad != 0 || vrad != 0) {
                     if (pulse > 0) {
-                        b.append(VolmitSender.pulse(spinToHex(o, hrad, srad, vrad), spinToHex(o, -hrad, -srad, -vrad), pulse));
+                        b.append(DecreeSender.pulse(spinToHex(o, hrad, srad, vrad), spinToHex(o, -hrad, -srad, -vrad), pulse));
                     } else {
                         b.append("<gradient:")
                                 .append(spinToHex(o, hrad, srad, vrad))
@@ -478,7 +476,7 @@ public enum C {
             C c = BY_CHAR.get(code);
             return c == null ? C.WHITE : c;
         } catch (Exception e) {
-            Iris.reportError(e);
+            e.printStackTrace();
             return C.WHITE;
         }
     }
@@ -497,7 +495,7 @@ public enum C {
 
             return BY_CHAR.get(code.charAt(0));
         } catch (Exception e) {
-            Iris.reportError(e);
+            e.printStackTrace();
             return C.WHITE;
         }
     }
@@ -645,96 +643,8 @@ public enum C {
         return new String(b);
     }
 
-    public static C fromItemMeta(byte c) {
-        for (C i : C.values()) {
-            if (i.getItemMeta() == c) {
-                return i;
-            }
-        }
-
-        return null;
-    }
-
-    public byte getMeta() {
-        return switch (this) {
-            case AQUA -> (byte) 11;
-            case BLACK -> (byte) 0;
-            case BLUE, DARK_AQUA -> (byte) 9;
-            case BOLD, UNDERLINE, STRIKETHROUGH, RESET, MAGIC, ITALIC -> (byte) -1;
-            case DARK_BLUE -> (byte) 1;
-            case DARK_GRAY -> (byte) 8;
-            case DARK_GREEN -> (byte) 2;
-            case DARK_PURPLE -> (byte) 5;
-            case DARK_RED -> (byte) 4;
-            case GOLD -> (byte) 6;
-            case GRAY -> (byte) 7;
-            case GREEN -> (byte) 10;
-            case LIGHT_PURPLE -> (byte) 13;
-            case RED -> (byte) 12;
-            case WHITE -> (byte) 15;
-            case YELLOW -> (byte) 14;
-            default -> (byte) 15;
-        };
-    }
-
-    public byte getItemMeta() {
-        return switch (this) {
-            case AQUA, DARK_AQUA -> (byte) 9;
-            case BLACK -> (byte) 15;
-            case BLUE -> (byte) 3;
-            case BOLD, UNDERLINE, RESET, STRIKETHROUGH, MAGIC, ITALIC -> (byte) -1;
-            case DARK_BLUE -> (byte) 11;
-            case DARK_GRAY -> (byte) 7;
-            case DARK_GREEN -> (byte) 13;
-            case DARK_PURPLE -> (byte) 10;
-            case DARK_RED, RED -> (byte) 14;
-            case GOLD, YELLOW -> (byte) 4;
-            case GRAY -> (byte) 8;
-            case GREEN -> (byte) 5;
-            case LIGHT_PURPLE -> (byte) 2;
-            case WHITE -> (byte) 0;
-            default -> (byte) 15;
-        };
-    }
-
-    public static C randomColor() {
-        return COLORS[(int) (Math.random() * (COLORS.length - 1))];
-    }
-
-    /**
-     * Gets the ChatColors used at the end of the given input string.
-     *
-     * @param input Input string to retrieve the colors from.
-     * @return Any remaining ChatColors to pass onto the next line.
-     */
-    public static String getLastColors(String input) {
-        StringBuilder result = new StringBuilder();
-        int length = input.length();
-
-        // Search backwards from the end as it is faster
-        for (int index = length - 1; index > -1; index--) {
-            char section = input.charAt(index);
-            if (section == COLOR_CHAR && index < length - 1) {
-                char c = input.charAt(index + 1);
-                C color = getByChar(c);
-
-                if (color != null) {
-                    result.insert(0, color);
-
-                    // Once we find a color or reset we can stop searching
-                    if (color.isColor() || color.equals(RESET)) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result.toString();
-    }
-
     static {
         for (C color : values()) {
-            BY_ID.put(color.intCode, color);
             BY_CHAR.put(color.code, color);
         }
     }

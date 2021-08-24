@@ -24,15 +24,13 @@ import lombok.experimental.Accessors;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
-@Accessors(
-        chain = true
-)
-public class DecreeLock {
+@Accessors(chain = true)
+public class Lock {
     private transient final ReentrantLock lock;
     private transient final String name;
     private transient boolean disabled = false;
 
-    public DecreeLock(String name) {
+    public Lock(String name) {
         this.name = name;
         lock = new ReentrantLock(false);
     }

@@ -16,15 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package nl.codevs.raiders.decree.util;
+package nl.codevs.raiders.decree;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.title.Title;
-import nl.codevs.raiders.decree.DecreeParameter;
+import nl.codevs.raiders.decree.util.C;
+import nl.codevs.raiders.decree.util.Form;
+import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
 import nl.codevs.raiders.decree.virtual.VirtualDecreeCommand;
 import org.bukkit.Server;
 import org.bukkit.Sound;
@@ -34,14 +37,11 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
-import java.time.Duration;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents a volume sender. A command sender with extra crap in it
@@ -50,6 +50,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DecreeSender implements CommandSender {
     private final CommandSender s;
+    private final Audience audience;
+    private final DecreeSystem system;
     private String tag;
     int spinh = -20;
     int spins = 7;
@@ -64,12 +66,13 @@ public class DecreeSender implements CommandSender {
      *
      * @param s the command sender
      */
-    public DecreeSender(CommandSender s) {
-        tag = "";
-        this.s = s;
+    public DecreeSender(CommandSender s, Plugin instance, DecreeSystem system) {
+        this(s, "", instance, system);
     }
 
-    public DecreeSender(CommandSender s, String tag) {
+    public DecreeSender(CommandSender s, String tag, Plugin instance, DecreeSystem system) {
+        this.audience = BukkitAudiences.create(instance).sender(s);
+        this.system = system;
         this.tag = tag;
         this.s = s;
     }
@@ -120,49 +123,49 @@ public class DecreeSender implements CommandSender {
     }
 
     @Override
-    public boolean isPermissionSet(String name) {
+    public boolean isPermissionSet(@NotNull String name) {
         return s.isPermissionSet(name);
     }
 
     @Override
-    public boolean isPermissionSet(Permission perm) {
+    public boolean isPermissionSet(@NotNull Permission perm) {
         return s.isPermissionSet(perm);
     }
 
     @Override
-    public boolean hasPermission(String name) {
+    public boolean hasPermission(@NotNull String name) {
         return s.hasPermission(name);
     }
 
     @Override
-    public boolean hasPermission(Permission perm) {
+    public boolean hasPermission(@NotNull Permission perm) {
         return s.hasPermission(perm);
     }
 
 
     @Override
-    public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value) {
+    public @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value) {
         return s.addAttachment(plugin, name, value);
     }
 
 
     @Override
-    public PermissionAttachment addAttachment(Plugin plugin) {
+    public @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin) {
         return s.addAttachment(plugin);
     }
 
     @Override
-    public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value, int ticks) {
+    public PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value, int ticks) {
         return s.addAttachment(plugin, name, value, ticks);
     }
 
     @Override
-    public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
+    public PermissionAttachment addAttachment(@NotNull Plugin plugin, int ticks) {
         return s.addAttachment(plugin, ticks);
     }
 
     @Override
-    public void removeAttachment(PermissionAttachment attachment) {
+    public void removeAttachment(@NotNull PermissionAttachment attachment) {
         s.removeAttachment(attachment);
     }
 
@@ -173,7 +176,7 @@ public class DecreeSender implements CommandSender {
 
 
     @Override
-    public Set<PermissionAttachmentInfo> getEffectivePermissions() {
+    public @NotNull Set<PermissionAttachmentInfo> getEffectivePermissions() {
         return s.getEffectivePermissions();
     }
 
@@ -187,33 +190,8 @@ public class DecreeSender implements CommandSender {
         s.setOp(value);
     }
 
-    public void hr() {
-        s.sendMessage("========================================================");
-    }
-
-    public void sendTitle(String title, String subtitle, int i, int s, int o) {
-        audiences.player(player()).showTitle(Title.title(
-                createComponent(title),
-                createComponent(subtitle),
-                Title.Times.of(Duration.ofMillis(i), Duration.ofMillis(s), Duration.ofMillis(o))));
-    }
-
     public static long getTick() {
         return System.currentTimeMillis() / 16;
-    }
-
-    public void sendProgress(double percent, String thing) {
-        if (percent < 0) {
-            int l = 44;
-            int g = (int) (1D * l);
-            sendTitle(C.IRIS + thing + " ", 0, 500, 250);
-            sendActionNoProcessing("" + "" + pulse("#00ff80", "#00373d", 1D) + "<underlined> " + Form.repeat(" ", g) + "<reset>" + Form.repeat(" ", l - g));
-        } else {
-            int l = 44;
-            int g = (int) (percent * l);
-            sendTitle(C.IRIS + thing + " " + C.BLUE + "<font:minecraft:uniform>" + Form.pc(percent, 0), 0, 500, 250);
-            sendActionNoProcessing("" + "" + pulse("#00ff80", "#00373d", 1D) + "<underlined> " + Form.repeat(" ", g) + "<reset>" + Form.repeat(" ", l - g));
-        }
     }
 
     public static String pulse(String colorA, String colorB, double speed) {
@@ -228,64 +206,15 @@ public class DecreeSender implements CommandSender {
         return ((1D - v) * 2D) - 1D;
     }
 
-    public void sendAction(String action) {
-        Iris.audiences.player(player()).sendActionBar(createNoPrefixComponent(action));
-    }
-
-    public void sendActionNoProcessing(String action) {
-        Iris.audiences.player(player()).sendActionBar(createNoPrefixComponentNoProcessing(action));
-    }
-
-    public void sendTitle(String subtitle, int i, int s, int o) {
-        Iris.audiences.player(player()).showTitle(Title.title(
-                createNoPrefixComponent(" "),
-                createNoPrefixComponent(subtitle),
-                Title.Times.of(Duration.ofMillis(i), Duration.ofMillis(s), Duration.ofMillis(o))));
-    }
-
-    private Component createNoPrefixComponent(String message) {
-        String t = C.translateAlternateColorCodes('&', message);
-        String a = C.aura(t, spinh, spins, spinb, 0.36);
-        return MiniMessage.get().parse(a);
-    }
-
-    private Component createNoPrefixComponentNoProcessing(String message) {
-        return MiniMessage.get().parse(message);
-    }
-
     private Component createComponent(String message) {
         String t = C.translateAlternateColorCodes('&', getTag() + message);
-        String a = C.aura(t, spinh, spins spinb);
+        String a = C.aura(t, spinh, spins, spinb);
         return MiniMessage.get().parse(a);
     }
 
     private Component createComponentRaw(String message) {
         String t = C.translateAlternateColorCodes('&', getTag() + message);
         return MiniMessage.get().parse(t);
-    }
-
-    public <T> void showWaiting(String passive, CompletableFuture<T> f) {
-        AtomicInteger v = new AtomicInteger();
-        AtomicReference<T> g = new AtomicReference<>();
-        v.set(J.ar(() -> {
-            if (f.isDone() && g.get() != null) {
-                J.car(v.get());
-                sendAction(" ");
-                return;
-            }
-
-            sendProgress(-1, passive);
-        }, 0));
-        J.a(() -> {
-            try {
-                g.set(f.get());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        });
-
     }
 
     @Override
@@ -296,12 +225,12 @@ public class DecreeSender implements CommandSender {
         }
 
         try {
-            Iris.audiences.sender(s).sendMessage(createComponent(message));
+            audience.sendMessage(createComponent(message));
         } catch (Throwable e) {
             String t = C.translateAlternateColorCodes('&', getTag() + message);
-            String a = C.aura(t, spinh, spins spinb;
+            String a = C.aura(t, spinh, spins, spinb);
 
-            Iris.debug("<NOMINI>Failure to parse " + a);
+            system.debug("<NOMINI>Failure to parse " + a);
             s.sendMessage(C.translateAlternateColorCodes('&', getTag() + message));
         }
     }
@@ -314,12 +243,12 @@ public class DecreeSender implements CommandSender {
         }
 
         try {
-            Iris.audiences.sender(s).sendMessage(createComponentRaw(message));
+            audience.sendMessage(createComponentRaw(message));
         } catch (Throwable e) {
             String t = C.translateAlternateColorCodes('&', getTag() + message);
             String a = C.aura(t, spinh, spins, spinb);
 
-            Iris.debug("<NOMINI>Failure to parse " + a);
+            system.debug("<NOMINI>Failure to parse " + a);
             s.sendMessage(C.translateAlternateColorCodes('&', getTag() + message));
         }
     }
@@ -331,7 +260,7 @@ public class DecreeSender implements CommandSender {
     }
 
     @Override
-    public void sendMessage(UUID uuid, String message) {
+    public void sendMessage(UUID uuid, @NotNull String message) {
         sendMessage(message);
     }
 
@@ -342,51 +271,50 @@ public class DecreeSender implements CommandSender {
 
 
     @Override
-    public Server getServer() {
+    public @NotNull Server getServer() {
         return s.getServer();
     }
 
 
     @Override
-    public String getName() {
+    public @NotNull String getName() {
         return s.getName();
     }
 
 
     @Override
-    public Spigot spigot() {
+    public @NotNull Spigot spigot() {
         return s.spigot();
     }
 
-    private String pickRandoms(int max, VirtualDecreeCommand i) {
-        KList<String> m = new KList<>();
+    private String pickRandoms(int max, VirtualDecreeCommand command) {
+        KList<String> randoms = new KList<>();
+        if (!command.isNode() || command.getNode().getParameters().isEmpty()) {
+            return "";
+        }
         for (int ix = 0; ix < max; ix++) {
-            m.add((i.isNode()
-                    ? (i.getNode().getParameters().isNotEmpty())
-                    ? "<#aebef2>✦ <#5ef288>"
-                    + i.getParentPath()
+            randoms.add(
+                    "<#aebef2>✦ <#5ef288>"
+                    + command.getParentPath()
                     + " <#42ecf5>"
-                    + i.getName() + " "
-                    + i.getNode().getParameters().shuffleCopy(RNG.r).convert((f)
-                            -> (f.isRequired() || RNG.r.b(0.5)
+                    + command.getName() + " "
+                    + command.getNode().getParameters().shuffleCopy(new Random()).convert((f)
+                            -> (f.isRequired() || Maths.drand(0, 1) > 0.5
                             ? "<#f2e15e>" + f.getNames().getRandom() + "="
                             + "<#d665f0>" + f.example()
                             : ""))
-                    .toString(" ")
-                    : ""
-                    : ""));
+                    .toString(" "));
         }
 
-        return m.removeDuplicates().convert((iff) -> iff.replaceAll("\\Q  \\E", " ")).toString("\n");
+        return randoms.removeDuplicates().convert((iff) -> iff.replaceAll("\\Q  \\E", " ")).toString("\n");
     }
 
 
     public void sendHeader(String name, int overrideLength) {
-        int len = overrideLength;
         int h = name.length() + 2;
-        String s = Form.repeat(" ", len - h - 4);
-        String si = Form.repeat("(", 3);
-        String so = Form.repeat(")", 3);
+        String s = Form.repeat(" ", overrideLength - h - 4);
+        String si = "(((";
+        String so = ")))";
         String sf = "[";
         String se = "]";
 

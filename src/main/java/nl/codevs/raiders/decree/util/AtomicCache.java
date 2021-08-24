@@ -25,9 +25,9 @@ public class AtomicCache<T> {
     private transient volatile T t;
     private transient volatile long a;
     private transient volatile int validations;
-    private final DecreeLock check;
-    private final DecreeLock time;
-    private final DecreeLock write;
+    private final Lock check;
+    private final Lock time;
+    private final Lock write;
     private final boolean nullSupport;
 
     public AtomicCache() {
@@ -36,9 +36,9 @@ public class AtomicCache<T> {
 
     public AtomicCache(boolean nullSupport) {
         this.nullSupport = nullSupport;
-        check = new DecreeLock("Check");
-        write = new DecreeLock("Write");
-        time = new DecreeLock("Time");
+        check = new Lock("Check");
+        write = new Lock("Write");
+        time = new Lock("Time");
         validations = 0;
         a = -1;
         t = null;

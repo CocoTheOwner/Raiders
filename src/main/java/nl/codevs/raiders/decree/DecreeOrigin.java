@@ -33,7 +33,7 @@ public enum DecreeOrigin {
      * @param sender The sender to check
      * @return True if valid for origin
      */
-    public boolean validFor(VolmitSender sender) {
+    public boolean validFor(DecreeSender sender) {
         if (sender.isPlayer()) {
             return this.equals(PLAYER) || this.equals(BOTH);
         } else {

@@ -19,19 +19,18 @@
 package nl.codevs.raiders.decree.virtual;
 
 import lombok.Data;
-import nl.codevs.raiders.decree.DecreeContext;
-import nl.codevs.raiders.decree.DecreeContextHandler;
-import nl.codevs.raiders.decree.DecreeNode;
-import nl.codevs.raiders.decree.DecreeParameter;
+import nl.codevs.raiders.decree.*;
 import nl.codevs.raiders.decree.annotations.Decree;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.util.*;
+import org.bukkit.Bukkit;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class VirtualDecreeCommand {
@@ -39,20 +38,22 @@ public class VirtualDecreeCommand {
     private final VirtualDecreeCommand parent;
     private final KList<VirtualDecreeCommand> nodes;
     private final DecreeNode node;
+    private final DecreeSystem system;
 
-    private VirtualDecreeCommand(Class<?> type, VirtualDecreeCommand parent, KList<VirtualDecreeCommand> nodes, DecreeNode node) {
+    private VirtualDecreeCommand(Class<?> type, VirtualDecreeCommand parent, KList<VirtualDecreeCommand> nodes, DecreeNode node, DecreeSystem system) {
         this.parent = parent;
         this.type = type;
         this.nodes = nodes;
         this.node = node;
+        this.system = system;
     }
 
-    public static VirtualDecreeCommand createRoot(Object v) throws Throwable {
-        return createRoot(null, v);
+    public static VirtualDecreeCommand createRoot(Object v, DecreeSystem system) throws Throwable {
+        return createRoot(null, v, system);
     }
 
-    public static VirtualDecreeCommand createRoot(VirtualDecreeCommand parent, Object v) throws Throwable {
-        VirtualDecreeCommand c = new VirtualDecreeCommand(v.getClass(), parent, new KList<>(), null);
+    public static VirtualDecreeCommand createRoot(VirtualDecreeCommand parent, Object v, DecreeSystem system) throws Throwable {
+        VirtualDecreeCommand c = new VirtualDecreeCommand(v.getClass(), parent, new KList<>(), null, system);
 
         for (Field i : v.getClass().getDeclaredFields()) {
             if (Modifier.isStatic(i.getModifiers()) || Modifier.isFinal(i.getModifiers()) || Modifier.isTransient(i.getModifiers()) || Modifier.isVolatile(i.getModifiers())) {
@@ -71,7 +72,7 @@ public class VirtualDecreeCommand {
                 i.set(v, childRoot);
             }
 
-            c.getNodes().add(createRoot(c, childRoot));
+            c.getNodes().add(createRoot(c, childRoot, system));
         }
 
         for (Method i : v.getClass().getDeclaredMethods()) {
@@ -83,7 +84,7 @@ public class VirtualDecreeCommand {
                 continue;
             }
 
-            c.getNodes().add(new VirtualDecreeCommand(v.getClass(), c, new KList<>(), new DecreeNode(v, i)));
+            c.getNodes().add(new VirtualDecreeCommand(v.getClass(), c, new KList<>(), new DecreeNode(v, i), system));
         }
 
         return c;
@@ -107,10 +108,6 @@ public class VirtualDecreeCommand {
 
     public String getName() {
         return isNode() ? getNode().getName() : getType().getDeclaredAnnotation(Decree.class).name();
-    }
-
-    private boolean isStudio() {
-        return isNode() ? getNode().getDecree().studio() : getType().getDeclaredAnnotation(Decree.class).studio();
     }
 
     public String getDescription() {
@@ -150,9 +147,6 @@ public class VirtualDecreeCommand {
     }
 
     private boolean invokeTabComplete(KList<String> args, KList<Integer> skip, KList<String> tabs, String raw) {
-        if (isStudio() && !IrisSettings.get().isStudio()) {
-            return false;
-        }
 
         if (isNode()) {
             tab(args, tabs);
@@ -248,8 +242,8 @@ public class VirtualDecreeCommand {
         }
     }
 
-    private KMap<String, Object> map(VolmitSender sender, KList<String> in) {
-        KMap<String, Object> data = new KMap<>();
+    private ConcurrentHashMap<String, Object> map(DecreeSender sender, KList<String> in) {
+        ConcurrentHashMap<String, Object> data = new ConcurrentHashMap<>();
 
         for (int ix = 0; ix < in.size(); ix++) {
             String i = in.get(ix);
@@ -280,7 +274,7 @@ public class VirtualDecreeCommand {
                 }
 
                 if (param == null) {
-                    Iris.debug("Can't find parameter key for " + key + "=" + value + " in " + getPath());
+                    system.debug("Can't find parameter key for " + key + "=" + value + " in " + getPath());
                     sender.sendMessage(C.YELLOW + "Unknown Parameter: " + key);
                     continue;
                 }
@@ -290,14 +284,14 @@ public class VirtualDecreeCommand {
                 try {
                     data.put(key, param.getHandler().parse(value));
                 } catch (DecreeParsingException e) {
-                    Iris.debug("Can't parse parameter value for " + key + "=" + value + " in " + getPath() + " using handler " + param.getHandler().getClass().getSimpleName());
+                    system.debug("Can't parse parameter value for " + key + "=" + value + " in " + getPath() + " using handler " + param.getHandler().getClass().getSimpleName());
                     sender.sendMessage(C.RED + "Cannot convert \"" + value + "\" into a " + param.getType().getSimpleName());
                     return null;
                 } catch (DecreeWhichException e) {
                     KList<?> validOptions = param.getHandler().getPossibilities(value);
-                    Iris.debug("Found multiple results for " + key + "=" + value + " in " + getPath() + " using the handler " + param.getHandler().getClass().getSimpleName() + " with potential matches [" + validOptions.toString(",") + "]. Asking client to define one");
+                    system.debug("Found multiple results for " + key + "=" + value + " in " + getPath() + " using the handler " + param.getHandler().getClass().getSimpleName() + " with potential matches [" + validOptions.toString(",") + "]. Asking client to define one");
                     String update = null; // TODO: PICK ONE
-                    Iris.debug("Client chose " + update + " for " + key + "=" + value + " (old) in " + getPath());
+                    system.debug("Client chose " + update + " for " + key + "=" + value + " (old) in " + getPath());
                     in.set(ix--, update);
                 }
             } else {
@@ -306,14 +300,14 @@ public class VirtualDecreeCommand {
                     try {
                         data.put(par.getName(), par.getHandler().parse(i));
                     } catch (DecreeParsingException e) {
-                        Iris.debug("Can't parse parameter value for " + par.getName() + "=" + i + " in " + getPath() + " using handler " + par.getHandler().getClass().getSimpleName());
+                        system.debug("Can't parse parameter value for " + par.getName() + "=" + i + " in " + getPath() + " using handler " + par.getHandler().getClass().getSimpleName());
                         sender.sendMessage(C.RED + "Cannot convert \"" + i + "\" into a " + par.getType().getSimpleName());
                         return null;
                     } catch (DecreeWhichException e) {
-                        Iris.debug("Can't parse parameter value for " + par.getName() + "=" + i + " in " + getPath() + " using handler " + par.getHandler().getClass().getSimpleName());
+                        system.debug("Can't parse parameter value for " + par.getName() + "=" + i + " in " + getPath() + " using handler " + par.getHandler().getClass().getSimpleName());
                         KList<?> validOptions = par.getHandler().getPossibilities(i);
                         String update = null; // TODO: PICK ONE
-                        Iris.debug("Client chose " + update + " for " + par.getName() + "=" + i + " (old) in " + getPath());
+                        system.debug("Client chose " + update + " for " + par.getName() + "=" + i + " (old) in " + getPath());
                         in.set(ix--, update);
                     }
                 } catch (IndexOutOfBoundsException e) {
@@ -325,19 +319,15 @@ public class VirtualDecreeCommand {
         return data;
     }
 
-    public boolean invoke(VolmitSender sender, KList<String> realArgs) {
+    public boolean invoke(DecreeSender sender, KList<String> realArgs) {
         return invoke(sender, realArgs, new KList<>());
     }
 
-    public boolean invoke(VolmitSender sender, KList<String> args, KList<Integer> skip) {
-        if (isStudio() && !IrisSettings.get().isStudio()) {
-            sender.sendMessage(C.RED + "To use Iris Studio Commands, please enable studio in Iris/settings.json (settings auto-reload)");
-            return false;
-        }
+    public boolean invoke(DecreeSender sender, KList<String> args, KList<Integer> skip) {
 
-        Iris.debug("@ " + getPath() + " with " + args.toString(", "));
+        system.debug("@ " + getPath() + " with " + args.toString(", "));
         if (isNode()) {
-            Iris.debug("Invoke " + getPath() + "(" + args.toString(",") + ") at ");
+            system.debug("Invoke " + getPath() + "(" + args.toString(",") + ") at ");
             if (invokeNode(sender, map(sender, args))) {
                 return true;
             }
@@ -365,7 +355,7 @@ public class VirtualDecreeCommand {
         return false;
     }
 
-    private boolean invokeNode(DecreeSender sender, KMap<String, Object> map) {
+    private boolean invokeNode(DecreeSender sender, ConcurrentHashMap<String, Object> map) {
         if (map == null) {
             return false;
         }
@@ -380,19 +370,19 @@ public class VirtualDecreeCommand {
                     value = i.getDefaultValue();
                 }
             } catch (DecreeParsingException e) {
-                Iris.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
+                system.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
                 sender.sendMessage(C.RED + "Cannot convert \"" + i + "\" into a " + i.getType().getSimpleName());
                 return false;
             } catch (DecreeWhichException e) {
-                Iris.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
+                system.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
                 KList<?> validOptions = i.getHandler().getPossibilities(i.getParam().defaultValue());
                 String update = null; // TODO: PICK ONE
-                Iris.debug("Client chose " + update + " for " + i.getName() + "=" + i + " (old) in " + getPath());
+                system.debug("Client chose " + update + " for " + i.getName() + "=" + i + " (old) in " + getPath());
                 try {
                     value = i.getDefaultValue();
                 } catch (DecreeParsingException x) {
                     x.printStackTrace();
-                    Iris.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
+                    system.debug("Can't parse parameter value for " + i.getName() + "=" + i + " in " + getPath() + " using handler " + i.getHandler().getClass().getSimpleName());
                     sender.sendMessage(C.RED + "Cannot convert \"" + i + "\" into a " + i.getType().getSimpleName());
                     return false;
                 } catch (DecreeWhichException x) {
@@ -407,18 +397,18 @@ public class VirtualDecreeCommand {
                     value = ch.handle(sender);
 
                     if (value != null) {
-                        Iris.debug("Null Parameter " + i.getName() + " derived a value of " + i.getHandler().toStringForce(value) + " from " + ch.getClass().getSimpleName());
+                        system.debug("Null Parameter " + i.getName() + " derived a value of " + i.getHandler().toStringForce(value) + " from " + ch.getClass().getSimpleName());
                     } else {
-                        Iris.debug("Null Parameter " + i.getName() + " could not derive a value from " + ch.getClass().getSimpleName());
+                        system.debug("Null Parameter " + i.getName() + " could not derive a value from " + ch.getClass().getSimpleName());
                     }
                 } else {
-                    Iris.debug("Null Parameter " + i.getName() + " is contextual but has no context handler for " + i.getType().getCanonicalName());
+                    system.debug("Null Parameter " + i.getName() + " is contextual but has no context handler for " + i.getType().getCanonicalName());
                 }
             }
 
             if (i.hasDefault() && value == null) {
                 try {
-                    Iris.debug("Null Parameter " + i.getName() + " is using default value " + i.getParam().defaultValue());
+                    system.debug("Null Parameter " + i.getName() + " is using default value " + i.getParam().defaultValue());
                     value = i.getDefaultValue();
                 } catch (Throwable e) {
                     e.printStackTrace();
@@ -446,7 +436,7 @@ public class VirtualDecreeCommand {
         };
 
         if (getNode().isSync()) {
-            J.s(rx);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(system.instance(), rx);
         } else {
             rx.run();
         }

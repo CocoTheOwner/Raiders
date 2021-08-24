@@ -19,9 +19,8 @@
 package nl.codevs.raiders.decree.context;
 
 import nl.codevs.raiders.decree.DecreeContextHandler;
-import nl.codevs.raiders.decree.util.DecreeSender;
+import nl.codevs.raiders.decree.DecreeSender;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 
 public class WorldContextHandler implements DecreeContextHandler<World> {
     public Class<World> getType() {

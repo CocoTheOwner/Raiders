@@ -20,51 +20,53 @@ package nl.codevs.raiders.decree;
 
 
 
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-import nl.codevs.raiders.Raiders;
-import nl.codevs.raiders.decree.util.JarScanner;
+import nl.codevs.raiders.decree.exceptions.DecreeException;
+import nl.codevs.raiders.decree.handlers.*;
+import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.KList;
-import nl.codevs.raiders.decree.util.DecreeSender;
 import nl.codevs.raiders.decree.virtual.VirtualDecreeCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public interface DecreeSystem extends CommandExecutor, TabCompleter {
-    KList<DecreeParameterHandler<?>> handlers = Iris.initialize("com.volmit.iris.util.decree.handlers", null).convert((i) -> (DecreeParameterHandler<?>) i);
+    KList<DecreeParameterHandler<?>> handlers = new KList<>(
+            new BlockVectorHandler(),
+            new BooleanHandler(),
+            new ByteHandler(),
+            new DoubleHandler(),
+            new FloatHandler(),
+            new IntegerHandler(),
+            new LongHandler(),
+            new PlayerHandler(),
+            new ShortHandler(),
+            new StringHandler(),
+            new VectorHandler(),
+            new WorldHandler()
+    );
 
     /**
      * The root class to start command searching from
-     *
-     * @return
      */
     VirtualDecreeCommand getRoot();
 
     /**
-     * The jar file, common to use getFile() in {@link org.bukkit.plugin.java.JavaPlugin}
+     * @return The instance of the plugin that is running Decree (literal 'this')
      */
-    File getJarFile();
+    Plugin instance();
 
     /**
-     * The bukkit audiences, commonly {@link BukkitAudiences#create(Plugin)}
-     * The entered plugin is the main class as an instance (this)
+     * Debug
+     * @param message message
      */
-    BukkitAudiences getAudiences();
-
-    void error(String string);
-
-    void debug(String string);
-
-    void info(String string);
+    void debug(String message);
 
     default boolean call(DecreeSender sender, String[] args) {
         DecreeContext.touch(sender);
@@ -83,9 +85,10 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
 
     @Override
     default boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        J.aBukkit(() -> {
-            if (!call(new DecreeSender(sender), args)) {
-                sender.sendMessage(C.RED + "Unknown Iris Command");
+
+        Bukkit.getScheduler().scheduleAsyncDelayedTask(instance(), () -> {
+            if (!call(new DecreeSender(sender, instance(), this), args)) {
+                sender.sendMessage(C.RED + "Unknown Decree Command");
             }
         });
         return true;
@@ -167,13 +170,12 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter {
      * @param type The type to handle
      * @return The corresponding {@link DecreeParameterHandler}, or null
      */
-    static DecreeParameterHandler<?> getHandler(Class<?> type) {
+    static DecreeParameterHandler<?> getHandler(Class<?> type) throws DecreeException {
         for (DecreeParameterHandler<?> i : handlers) {
             if (i.supports(type)) {
                 return i;
             }
         }
-        Iris.error("Unhandled type in Decree Parameter: " + type.getName() + ". This is bad!");
-        return null;
+        throw new DecreeException("Unhandled type in Decree Parameter: " + type.getName() + ". This is bad! Please remove the parameter or add a handler for it");
     }
 }

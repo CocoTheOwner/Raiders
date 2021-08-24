@@ -19,6 +19,8 @@
 package nl.codevs.raiders.decree.annotations;
 
 
+import nl.codevs.raiders.decree.DecreeOrigin;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,13 +36,6 @@ public @interface Decree {
      * The name of this command, which is the Method's name by default
      */
     String name() default "";
-
-    /**
-     * Only allow if studio mode is enabled
-     *
-     * @return defaults to false
-     */
-    boolean studio() default false;
 
     /**
      * If the node's functions MUST be run in sync, set this to true.<br>

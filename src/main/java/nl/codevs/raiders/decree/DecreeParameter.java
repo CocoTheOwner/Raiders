@@ -19,6 +19,9 @@
 package nl.codevs.raiders.decree;
 
 import lombok.Data;
+import nl.codevs.raiders.decree.annotations.Param;
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.util.AtomicCache;
 import nl.codevs.raiders.decree.util.KList;
 
@@ -42,12 +45,7 @@ public class DecreeParameter {
         return handlerCache.aquire(() -> {
             try
             {
-                if(param.customHandler().equals(DummyHandler.class))
-                {
-                    return DecreeSystem.getHandler(getType());
-                }
-
-                return param.customHandler().getConstructor().newInstance();
+                return DecreeSystem.getHandler(getType());
             }
 
             catch(Throwable e)

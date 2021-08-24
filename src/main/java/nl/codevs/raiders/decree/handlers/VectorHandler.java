@@ -24,6 +24,9 @@ import nl.codevs.raiders.decree.DecreeParameterHandler;
 import nl.codevs.raiders.decree.DecreeSystem;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
+import nl.codevs.raiders.decree.DecreeSender;
+import nl.codevs.raiders.decree.util.Form;
+import nl.codevs.raiders.decree.util.KList;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockVector;
@@ -42,7 +45,7 @@ public class VectorHandler implements DecreeParameterHandler<Vector> {
     @Override
     public KList<Vector> getPossibilities() {
         KList<Vector> vx = new KList<>();
-        VolmitSender s = DecreeContext.get();
+        DecreeSender s = DecreeContext.get();
 
         if (s.isPlayer()) {
             vx.add(s.player().getLocation().toVector());

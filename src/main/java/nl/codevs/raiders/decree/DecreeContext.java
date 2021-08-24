@@ -19,13 +19,14 @@
 package nl.codevs.raiders.decree;
 
 import nl.codevs.raiders.decree.util.ChronoLatch;
-import nl.codevs.raiders.decree.util.DecreeSender;
-import nl.codevs.raiders.decree.util.KMap;
-import org.bukkit.entity.Player;
+import nl.codevs.raiders.decree.util.KList;
+
+import java.util.Enumeration;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DecreeContext {
     private static final ChronoLatch cl = new ChronoLatch(60000);
-    private static final KMap<Thread, DecreeSender> context = new KMap<>();
+    private static final ConcurrentHashMap<Thread, DecreeSender> context = new ConcurrentHashMap<>();
 
     public static DecreeSender get() {
         return context.get(Thread.currentThread());
@@ -36,12 +37,23 @@ public class DecreeContext {
             context.put(Thread.currentThread(), c);
 
             if (cl.flip()) {
-                for (Thread i : context.k()) {
+                for (Thread i : contextKeys()) {
                     if (!i.isAlive()) {
                         context.remove(i);
                     }
                 }
             }
         }
+    }
+
+    private static KList<Thread> contextKeys() {
+        KList<Thread> k = new KList<>();
+        Enumeration<Thread> kk = DecreeContext.context.keys();
+
+        while (kk.hasMoreElements()) {
+            k.add(kk.nextElement());
+        }
+
+        return k;
     }
 }

@@ -19,6 +19,11 @@
 package nl.codevs.raiders.decree.handlers;
 
 
+import nl.codevs.raiders.decree.DecreeParameterHandler;
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
+
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LongHandler implements DecreeParameterHandler<Long> {
@@ -50,6 +55,6 @@ public class LongHandler implements DecreeParameterHandler<Long> {
 
     @Override
     public String getRandomDefault() {
-        return RNG.r.i(0, 99) + "";
+        return String.valueOf(Maths.irand(0, 99));
     }
 }

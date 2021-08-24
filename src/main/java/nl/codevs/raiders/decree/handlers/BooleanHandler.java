@@ -19,6 +19,11 @@
 package nl.codevs.raiders.decree.handlers;
 
 
+import nl.codevs.raiders.decree.DecreeParameterHandler;
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
+
 public class BooleanHandler implements DecreeParameterHandler<Boolean> {
     @Override
     public KList<Boolean> getPossibilities() {
@@ -46,6 +51,6 @@ public class BooleanHandler implements DecreeParameterHandler<Boolean> {
 
     @Override
     public String getRandomDefault() {
-        return M.r(0.5) + "";
+        return Maths.r(0.5) + "";
     }
 }

@@ -19,6 +19,10 @@
 package nl.codevs.raiders.decree;
 
 
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
+import nl.codevs.raiders.decree.util.KList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,12 +33,7 @@ public interface DecreeParameterHandler<T> {
      *
      * @return Possibilities for this type.
      */
-    List<T> getPossibilities();
-
-    default boolean isDummy()
-    {
-        return false;
-    }
+    KList<T> getPossibilities();
 
     /**
      * Converting the type back to a string (inverse of the {@link #parse(String) parse} method)
@@ -78,15 +77,15 @@ public interface DecreeParameterHandler<T> {
      * @param input The inputted string to check against
      * @return A {@link List} of possibilities
      */
-    default List<T> getPossibilities(String input) {
+    default KList<T> getPossibilities(String input) {
         if (input.trim().isEmpty()) {
-            List<T> f = getPossibilities();
-            return f == null ? new ArrayList<>() : f;
+            KList<T> f = getPossibilities();
+            return f == null ? new KList<>() : f;
         }
 
         input = input.trim();
-        List<T> possible = getPossibilities();
-        List<T> matches = new ArrayList<>();
+        KList<T> possible = getPossibilities();
+        KList<T> matches = new KList<>();
 
         if (possible == null || possible.isEmpty()) {
             return matches;
@@ -96,7 +95,7 @@ public interface DecreeParameterHandler<T> {
             return getPossibilities();
         }
 
-        List<String> converted = possible possible.convert(v -> toString(v).trim());
+        List<String> converted = possible.convert(v -> toString(v).trim());
 
         for (int i = 0; i < converted.size(); i++) {
             String g = converted.get(i);

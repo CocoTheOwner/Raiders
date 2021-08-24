@@ -19,6 +19,11 @@
 package nl.codevs.raiders.decree.handlers;
 
 
+import nl.codevs.raiders.decree.DecreeParameterHandler;
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
+
 public class ByteHandler implements DecreeParameterHandler<Byte> {
     @Override
     public KList<Byte> getPossibilities() {
@@ -46,6 +51,6 @@ public class ByteHandler implements DecreeParameterHandler<Byte> {
 
     @Override
     public String getRandomDefault() {
-        return RNG.r.i(0, Byte.MAX_VALUE) + "";
+        return String.valueOf(Maths.irand(0, Byte.MAX_VALUE));
     }
 }

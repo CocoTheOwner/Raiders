@@ -18,6 +18,15 @@
 
 package nl.codevs.raiders.decree.handlers;
 
+import nl.codevs.raiders.decree.DecreeContext;
+import nl.codevs.raiders.decree.DecreeParameterHandler;
+import nl.codevs.raiders.decree.DecreeSystem;
+import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
+import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
+import nl.codevs.raiders.decree.DecreeSender;
+import nl.codevs.raiders.decree.util.Form;
+import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockVector;
@@ -26,7 +35,7 @@ public class BlockVectorHandler implements DecreeParameterHandler<BlockVector> {
     @Override
     public KList<BlockVector> getPossibilities() {
         KList<BlockVector> vx = new KList<>();
-        VolmitSender s = DecreeContext.get();
+        DecreeSender s = DecreeContext.get();
 
         if (s.isPlayer()) {
             vx.add(s.player().getLocation().toVector().toBlockVector());
@@ -97,6 +106,6 @@ public class BlockVectorHandler implements DecreeParameterHandler<BlockVector> {
 
     @Override
     public String getRandomDefault() {
-        return M.r(0.5) ? "0,0" : "0,0,0";
+        return Maths.r(0.5) ? "0,0" : "0,0,0";
     }
 }
