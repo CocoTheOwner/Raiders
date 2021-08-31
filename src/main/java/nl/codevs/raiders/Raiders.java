@@ -1,8 +1,8 @@
 package nl.codevs.raiders;
 
 import nl.codevs.raiders.decree.DecreeSystem;
-import nl.codevs.raiders.decree.objects.DecreeNodeExecutor;
-import nl.codevs.raiders.decrees.MainCommandClass;
+import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
+import nl.codevs.raiders.decrees.DecRaid;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class Decree extends JavaPlugin implements DecreeSystem, DecreeNodeExecutor {
+public class Raiders extends JavaPlugin implements DecreeSystem {
 
     @Override
     public Plugin instance() {
@@ -21,19 +21,24 @@ public class Decree extends JavaPlugin implements DecreeSystem, DecreeNodeExecut
     }
 
     @Override
-    public DecreeNodeExecutor getRootClass() {
-        return new MainCommandClass();
+    public boolean doCommandSound() {
+        return true;
+    }
+
+    @Override
+    public DecreeCommandExecutor getRootInstance() {
+        return new DecRaid();
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        return decreeCommand(sender, command, label, args);
+        return decreeCommand(sender, args);
     }
 
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        return decreeTabComplete(sender, command, alias, args);
+        return decreeTabComplete(sender, args);
     }
 
     @Override

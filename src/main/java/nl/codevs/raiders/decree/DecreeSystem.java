@@ -18,28 +18,29 @@
 
 package nl.codevs.raiders.decree;
 
-
 import nl.codevs.raiders.decree.exceptions.DecreeException;
+import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.handlers.*;
-import nl.codevs.raiders.decree.objects.DecreeContext;
-import nl.codevs.raiders.decree.objects.DecreeNodeExecutor;
-import nl.codevs.raiders.decree.objects.DecreeParameterHandler;
-import nl.codevs.raiders.decree.objects.DecreeVirtualCommand;
+import nl.codevs.raiders.decree.objects.*;
 import nl.codevs.raiders.decree.util.AtomicCache;
 import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.KList;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
     AtomicCache<DecreeVirtualCommand> commandCache = new AtomicCache<>();
+    ConcurrentHashMap<String, CompletableFuture<String>> futures = new ConcurrentHashMap<>();
     KList<DecreeParameterHandler<?>> handlers = new KList<>(
             new BlockVectorHandler(),
             new BooleanHandler(),
@@ -58,7 +59,7 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
     /**
      * The root class to start command searching from
      */
-    DecreeNodeExecutor getRootClass();
+    DecreeCommandExecutor getRootInstance();
 
     /**
      * Before you fill out these functions. Read the README.md file in the decree directory.
@@ -68,17 +69,53 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
     Plugin instance();
 
     /**
+     * Whether the command system should send sounds
+     */
+    boolean doCommandSound();
+
+    @EventHandler
+    default void on(PlayerCommandPreprocessEvent e)
+    {
+        String msg = e.getMessage().startsWith("/") ? e.getMessage().substring(1) : e.getMessage();
+
+        if(msg.startsWith("decreefuture "))
+        {
+            String[] args = msg.split("\\Q \\E");
+            CompletableFuture<String> future = futures.get(args[1]);
+
+            if(future != null)
+            {
+                future.complete(args[2]);
+                e.setCancelled(true);
+            }
+        }
+    }
+
+    /**
+     * Post a future which assists in figuring out {@link DecreeWhichException}s
+     * @param password The password to access this future (appended to the onclick)
+     * @param future The future to fulfill
+     */
+    default void postFuture(String password, CompletableFuture<String> future) {
+        futures.put(password, future);
+    }
+
+    /**
      * What to do with debug messages
      * @param message The debug message
      */
     default void debug(String message) {
-        Bukkit.getConsoleSender().sendMessage();
+        Bukkit.getConsoleSender().sendMessage(message);
     }
 
+    /**
+     * Get the root {@link DecreeVirtualCommand}
+     */
     default DecreeVirtualCommand getRoot() {
         return commandCache.aquire(() -> {
             try {
-                return DecreeVirtualCommand.createRoot(getRootClass(), this);
+                //return new DecreeCategory(null, getRootInstance(), getRootInstance().getClass().getDeclaredAnnotation(Decree.class));
+                return DecreeVirtualCommand.createOrigin(getRootInstance(), getRootInstance().getClass().getDeclaredAnnotation(Decree.class), this);
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -87,96 +124,22 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
         });
     }
 
-    default boolean call(DecreeSender sender, String[] args) {
-        DecreeContext.touch(sender);
-        return getRoot().invoke(sender, enhanceArgs(args));
-    }
-
-    default List<String> decreeTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        KList<String> enhanced = new KList<>(args);
-        KList<String> v = getRoot().tabComplete(enhanced, enhanced.toString(" "), new DecreeSender(sender, instance(), this));
+    default List<String> decreeTabComplete(@NotNull CommandSender sender, @NotNull String[] args) {
+        KList<String> v = getRoot().invokeTabComplete(new KList<>(args), new DecreeSender(sender, instance(), this));
         v.removeDuplicates();
         return v;
     }
 
-    default boolean decreeCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-
+    default boolean decreeCommand(@NotNull CommandSender sender, @NotNull String[] args) {
         Bukkit.getScheduler().scheduleAsyncDelayedTask(instance(), () -> {
-            if (!call(new DecreeSender(sender, instance(), this), args)) {
+            DecreeSender decreeSender = new DecreeSender(sender, instance(), this);
+            DecreeContext.touch(decreeSender);
+
+            if (!getRoot().invoke(decreeSender, new KList<>(args), new KList<>())) {
                 sender.sendMessage(C.RED + "Unknown Decree Command");
             }
         });
         return true;
-    }
-
-    static KList<String> enhanceArgs(String[] args) {
-        return enhanceArgs(args, true);
-    }
-
-    static KList<String> enhanceArgs(String[] args, boolean trim) {
-        KList<String> a = new KList<>();
-
-        if (args.length == 0) {
-            return a;
-        }
-
-        StringBuilder flat = new StringBuilder();
-        for (String i : args) {
-            if (trim) {
-                if (i.trim().isEmpty()) {
-                    continue;
-                }
-
-                flat.append(" ").append(i.trim());
-            } else {
-                if (i.endsWith(" ")) {
-                    flat.append(" ").append(i.trim()).append(" ");
-                }
-            }
-        }
-
-        flat = new StringBuilder(flat.length() > 0 ? trim ? flat.toString().trim().length() > 0 ? flat.substring(1).trim() : flat.toString().trim() : flat.substring(1) : flat);
-        StringBuilder arg = new StringBuilder();
-        boolean quoting = false;
-
-        for (int x = 0; x < flat.length(); x++) {
-            char i = flat.charAt(x);
-            char j = x < flat.length() - 1 ? flat.charAt(x + 1) : i;
-            boolean hasNext = x < flat.length();
-
-            if (i == ' ' && !quoting) {
-                if (!arg.toString().trim().isEmpty() && trim) {
-                    a.add(arg.toString().trim());
-                    arg = new StringBuilder();
-                }
-            } else if (i == '"') {
-                if (!quoting && (arg.length() == 0)) {
-                    quoting = true;
-                } else if (quoting) {
-                    quoting = false;
-
-                    if (hasNext && j == ' ') {
-                        if (!arg.toString().trim().isEmpty() && trim) {
-                            a.add(arg.toString().trim());
-                            arg = new StringBuilder();
-                        }
-                    } else if (!hasNext) {
-                        if (!arg.toString().trim().isEmpty() && trim) {
-                            a.add(arg.toString().trim());
-                            arg = new StringBuilder();
-                        }
-                    }
-                }
-            } else {
-                arg.append(i);
-            }
-        }
-
-        if (!arg.toString().trim().isEmpty() && trim) {
-            a.add(arg.toString().trim());
-        }
-
-        return a;
     }
 
     /**
@@ -191,6 +154,6 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
                 return i;
             }
         }
-        throw new DecreeException("Unhandled type in Decree Parameter: " + type.getName() + ". This is bad! Please remove the parameter or add a handler for it");
+        throw new DecreeException("Unhandled type in Decree Parameter: " + type.getName() + ". This is bad! Contact your admin! (Remove param or add handler)");
     }
 }

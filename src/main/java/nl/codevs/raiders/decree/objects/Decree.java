@@ -30,6 +30,8 @@ public @interface Decree {
 
     String DEFAULT_DESCRIPTION = "No Description Provided";
 
+    String NO_PERMISSION = "No Permission Required";
+
     /**
      * The name of this command, which is the Method's name by default
      */
@@ -60,4 +62,11 @@ public @interface Decree {
      * If someone uses /plugin foo and you specify alias="f" here, /plugin f will do the exact same.
      */
     String[] aliases() default "";
+
+    /**
+     * The permissions class that gives the required permission for this command.<p>
+     * By default, it requires no permissions
+     * @return
+     */
+    String permission() default NO_PERMISSION;
 }

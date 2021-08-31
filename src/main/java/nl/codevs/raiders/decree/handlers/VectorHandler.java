@@ -19,7 +19,6 @@
 package nl.codevs.raiders.decree.handlers;
 
 
-import nl.codevs.raiders.decree.DecreeSender;
 import nl.codevs.raiders.decree.DecreeSystem;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
@@ -44,14 +43,7 @@ public class VectorHandler implements DecreeParameterHandler<Vector> {
 
     @Override
     public KList<Vector> getPossibilities() {
-        KList<Vector> vx = new KList<>();
-        DecreeSender s = DecreeContext.get();
-
-        if (s.isPlayer()) {
-            vx.add(s.player().getLocation().toVector());
-        }
-
-        return vx;
+        return null;
     }
 
     @Override
@@ -64,7 +56,7 @@ public class VectorHandler implements DecreeParameterHandler<Vector> {
     }
 
     @Override
-    public Vector parse(String in) throws DecreeParsingException, DecreeWhichException {
+    public Vector parse(String in, boolean force) throws DecreeParsingException, DecreeWhichException {
         try {
             if (in.contains(",")) {
                 String[] comp = in.split("\\Q,\\E");

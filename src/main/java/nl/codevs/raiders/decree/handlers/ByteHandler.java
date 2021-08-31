@@ -25,6 +25,7 @@ import nl.codevs.raiders.decree.util.KList;
 import nl.codevs.raiders.decree.util.Maths;
 
 public class ByteHandler implements DecreeParameterHandler<Byte> {
+
     @Override
     public KList<Byte> getPossibilities() {
         return null;
@@ -36,7 +37,7 @@ public class ByteHandler implements DecreeParameterHandler<Byte> {
     }
 
     @Override
-    public Byte parse(String in) throws DecreeParsingException {
+    public Byte parse(String in, boolean force) throws DecreeParsingException {
         try {
             return Byte.parseByte(in);
         } catch (Throwable e) {

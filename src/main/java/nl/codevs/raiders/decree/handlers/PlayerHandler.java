@@ -20,16 +20,19 @@ package nl.codevs.raiders.decree.handlers;
 
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
+import nl.codevs.raiders.decree.objects.DecreeContext;
 import nl.codevs.raiders.decree.objects.DecreeParameterHandler;
 import nl.codevs.raiders.decree.util.KList;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class PlayerHandler implements DecreeParameterHandler<Player> {
     @Override
-    public KList<Player> getPossibilities() {
+    public @NotNull KList<Player> getPossibilities() {
         return new KList<>(new ArrayList<>(Bukkit.getOnlinePlayers()));
     }
 
@@ -39,14 +42,28 @@ public class PlayerHandler implements DecreeParameterHandler<Player> {
     }
 
     @Override
-    public Player parse(String in) throws DecreeParsingException, DecreeWhichException {
+    public Player parse(String in, boolean force) throws DecreeParsingException, DecreeWhichException {
         try {
             KList<Player> options = getPossibilities(in);
+            KList<String> names = getPossibilities().convert(HumanEntity::getName);
+
+            if (!names.contains("self") && in.equals("self") && DecreeContext.get().isPlayer()){
+                return DecreeContext.get().player();
+            }
+            if (!names.contains("me") && in.equals("me") && DecreeContext.get().isPlayer()){
+                return DecreeContext.get().player();
+            }
+            if (!names.contains("random") && in.equals("random")){
+                return options.getRandom();
+            }
 
             if (options.isEmpty()) {
                 throw new DecreeParsingException("Unable to find Player \"" + in + "\"");
             } else if (options.size() > 1) {
-                throw new DecreeWhichException();
+                if (force) {
+                    return options.getRandom();
+                }
+                throw new DecreeWhichException(Player.class, in);
             }
 
             return options.get(0);
@@ -60,8 +77,14 @@ public class PlayerHandler implements DecreeParameterHandler<Player> {
         return type.equals(Player.class);
     }
 
+    KList<String> defaults = new KList<>(
+            "playername",
+            "self",
+            "random"
+    );
+
     @Override
     public String getRandomDefault() {
-        return "playername";
+        return defaults.getRandom();
     }
 }

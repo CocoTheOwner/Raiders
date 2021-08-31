@@ -24,6 +24,7 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import nl.codevs.raiders.decree.objects.Decree;
 import nl.codevs.raiders.decree.objects.DecreeOrigin;
 import nl.codevs.raiders.decree.objects.DecreeParameter;
 import nl.codevs.raiders.decree.objects.DecreeVirtualCommand;
@@ -297,13 +298,13 @@ public class DecreeSender implements CommandSender {
         for (int ix = 0; ix < max; ix++) {
             randoms.add(
                     "<#aebef2>✦ <#5ef288>"
-                    + command.getParentPath()
+                    + command.parent().getPath()
                     + " <#42ecf5>"
                     + command.getName() + " "
                     + command.getNode().getParameters().shuffleCopy(new Random()).convert((f)
                             -> (f.isRequired() || Maths.drand(0, 1) > 0.5
-                            ? "<#f2e15e>" + f.getNames().getRandom() + "="
-                            + "<#d665f0>" + f.example()
+                            ? "<#f2e15e>" + f.exampleName() + "="
+                            + "<#d665f0>" + f.exampleValue()
                             : ""))
                     .toString(" "));
         }
@@ -328,7 +329,7 @@ public class DecreeSender implements CommandSender {
     }
 
     public void sendHeader(String name) {
-        sendHeader(name, 46);
+        sendHeader(name, 40);
     }
 
     public void sendDecreeHelp(DecreeVirtualCommand v) {
@@ -380,11 +381,22 @@ public class DecreeSender implements CommandSender {
                 onClick = "run_command";
             }
 
+            String permission = "";
+            String granted = "";
+            if (!i.getDecree().permission().equals(Decree.NO_PERMISSION)){
+                if (isOp() || hasPermission(i.getDecree().permission())){
+                    granted = "<#a73abd>(Granted)";
+                } else {
+                    granted = "<#db4321>(Not Granted)";
+                }
+                permission += "<#2181db>⏍ <#78dcf0><font:minecraft:uniform>Permission: <#ffa500>" + i.getDecree().permission() + " " + granted + newline;
+            }
+
             String suggestion = "";
             String suggestions = "";
             if (i.isNode() && i.getNode().getParameters().isNotEmpty()) {
-                suggestion += newline + "<#aebef2>✦ <#5ef288><font:minecraft:uniform>" + i.getParentPath() + " <#42ecf5>" + i.getName() + " "
-                        + i.getNode().getParameters().convert((f) -> "<#d665f0>" + f.example()).toString(" ");
+                suggestion += newline + "<#aebef2>✦ <#5ef288><font:minecraft:uniform>" + i.parent().getPath() + " <#42ecf5>" + i.getName() + " "
+                        + i.getNode().getParameters().convert((f) -> "<#d665f0>" + f.exampleValue()).toString(" ");
                 suggestions += newline + "<font:minecraft:uniform>" + pickRandoms(Math.min(i.getNode().getParameters().size() + 1, 5), i);
             }
 
@@ -436,8 +448,9 @@ public class DecreeSender implements CommandSender {
                     "<hover:show_text:'" +
                         hoverTitle + newline +
                         description + newline +
-                        usage +
-                        suggestion + //Newlines for suggestions are added when they're built, to prevent blanklines.
+                        permission + // Newlines added internally
+                        usage + // Newlines added internally
+                        suggestion + // Newlines added internally
                         suggestions + newline +
                         originText +
                     "'>" +
@@ -445,10 +458,10 @@ public class DecreeSender implements CommandSender {
                         onClick +
                         ":" +
                         realText +
-                    "</click>" +
                     "</hover>" +
-                    " " +
-                    nodes;
+                        " " +
+                        nodes +
+                    "</click>";
 
             sendMessageRaw(wrapper);
         } else {

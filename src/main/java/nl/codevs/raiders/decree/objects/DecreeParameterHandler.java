@@ -52,15 +52,19 @@ public interface DecreeParameterHandler<T> {
         return toString((T) t);
     }
 
+    default T parse(String in) throws DecreeParsingException, DecreeWhichException {
+        return parse(in, false);
+    }
+
     /**
      * Should parse a String into the designated type
-     *
      * @param in The string to parse
+     * @param force Force an option instead of throwing a {@link DecreeWhichException} if possible (can allow it throwing!)
      * @return The value extracted from the string, of the designated type
      * @throws DecreeParsingException Thrown when the parsing fails (ex: "oop" translated to an integer throws this)
      * @throws DecreeWhichException   Thrown when multiple results are possible
      */
-    T parse(String in) throws DecreeParsingException, DecreeWhichException;
+    T parse(String in, boolean force) throws DecreeParsingException, DecreeWhichException;
 
     /**
      * Returns whether a certain type is supported by this handler<br>
@@ -110,13 +114,29 @@ public interface DecreeParameterHandler<T> {
         return matches;
     }
 
+    /**
+     * Return a random value that may be entered
+     * @return A random default value
+     */
     default String getRandomDefault() {
-        return "NOEXAMPLE";
+        return "NO DEFAULT";
     }
 
-    default double getMultiplier(AtomicReference<String> g) {
-        double multiplier = 1;
-        String in = g.get();
+    /**
+     * Calculate integer multiplier value for an input<br>
+     * Values used are<br>
+     * - k > 1.000<br>
+     * - m > 1.000.000<br>
+     * - r > 512<br>
+     * - h > 100<br>
+     * - c > 16<br>
+     * ! This does not return the actual value, just the multiplier!
+     * @param value The inputted value
+     * @return
+     */
+    default int getMultiplier(AtomicReference<String> value) {
+        int multiplier = 1;
+        String in = value.get();
         boolean valid = true;
         while (valid) {
             boolean trim = false;
@@ -144,7 +164,7 @@ public interface DecreeParameterHandler<T> {
             }
         }
 
-        g.set(in);
+        value.set(in);
         return multiplier;
     }
 }

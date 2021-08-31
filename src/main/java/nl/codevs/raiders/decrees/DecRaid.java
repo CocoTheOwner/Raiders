@@ -1,12 +1,12 @@
 package nl.codevs.raiders.decrees;
 
 import nl.codevs.raiders.decree.objects.Decree;
-import nl.codevs.raiders.decree.objects.DecreeNodeExecutor;
+import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
 import nl.codevs.raiders.decree.objects.DecreeOrigin;
 import nl.codevs.raiders.decree.objects.Param;
 
 @Decree(name = "command", aliases = {"cmmd", "cmd", "cd"}, description = "Main commands")
-public class MainCommandClass implements DecreeNodeExecutor {
+public class DecRaid implements DecreeCommandExecutor {
 
     // This line is a category pointer
     private SubCommandClass nameDoesNotMatterHere;
