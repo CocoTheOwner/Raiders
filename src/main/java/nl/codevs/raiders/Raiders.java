@@ -13,6 +13,12 @@ import java.util.List;
 public class Raiders extends JavaPlugin {
 
     private final DecreeSystem decreeSystem = new DecreeSystem(new DecRaid(), this);
+    private final RaiderPlayerRegistrar raiderPlayerRegistrar = new RaiderPlayerRegistrar();
+    public static Raiders instance = null;
+
+    public Raiders() {
+        instance = this;
+    }
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
@@ -27,6 +33,8 @@ public class Raiders extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(decreeSystem, this);
+        Bukkit.getPluginManager().registerEvents(raiderPlayerRegistrar, this);
+        Bukkit.getServer().getOnlinePlayers().forEach(raiderPlayerRegistrar::register);
     }
 
     @Override
