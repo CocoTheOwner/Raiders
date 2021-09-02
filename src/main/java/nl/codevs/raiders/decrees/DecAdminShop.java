@@ -20,7 +20,7 @@ public class DecAdminShop implements DecreeCommandExecutor {
             @Param(description = "The shop to remove")
             RShop shop
     ) {
-        RShopRegistrar.shops.remove(shop.getName());
+        RShopRegistrar.getShops().remove(shop.getName());
         success("Removed shop: " + shop.getName());
     }
 
@@ -31,7 +31,7 @@ public class DecAdminShop implements DecreeCommandExecutor {
             @Param(description = "The items number to remove")
                     int item
     ) {
-        RItem i = RShopRegistrar.shops.get(shop.getName()).getItems().remove(item);
+        RItem i = RShopRegistrar.getShops().get(shop.getName()).getItems().remove(item);
         success("Removed item: " + i.getItemStack().getType().getKey());
     }
 }

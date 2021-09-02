@@ -1,13 +1,15 @@
 package nl.codevs.raiders;
 
 
+import lombok.Getter;
 import nl.codevs.raiders.decree.util.KList;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RShopRegistrar {
-    public static final ConcurrentHashMap<String, RShop> shops = new ConcurrentHashMap<>();
+    @Getter
+    private static final ConcurrentHashMap<String, RShop> shops = new ConcurrentHashMap<>();
 
     /**
      * Loads all shops from file

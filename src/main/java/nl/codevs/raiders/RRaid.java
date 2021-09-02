@@ -1,5 +1,8 @@
 package nl.codevs.raiders;
 
-public class RRaid {
+import lombok.Data;
 
+@Data
+public class RRaid {
+    private final String name;
 }
