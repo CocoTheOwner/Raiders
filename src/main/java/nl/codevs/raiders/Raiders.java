@@ -12,8 +12,7 @@ import java.util.List;
 
 public class Raiders extends JavaPlugin {
 
-    private final DecreeSystem decreeSystem = new DecreeSystem(new DecRaid(), this);
-    private final RaiderPlayerRegistrar raiderPlayerRegistrar = new RaiderPlayerRegistrar();
+    public final DecreeSystem decreeSystem = new DecreeSystem(new DecRaid(), this);
     public static Raiders instance = null;
 
     public Raiders() {
@@ -33,8 +32,8 @@ public class Raiders extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(decreeSystem, this);
-        Bukkit.getPluginManager().registerEvents(raiderPlayerRegistrar, this);
-        Bukkit.getServer().getOnlinePlayers().forEach(raiderPlayerRegistrar::register);
+        Bukkit.getPluginManager().registerEvents(new RaiderPlayerRegistrar(), this);
+        Bukkit.getServer().getOnlinePlayers().forEach(RaiderPlayerRegistrar::register);
     }
 
     @Override

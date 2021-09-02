@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RaiderPlayerRegistrar implements Listener {
 
-    private static final ConcurrentHashMap<UUID, RaiderPlayer> players = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<UUID, RaiderPlayer> players = new ConcurrentHashMap<>();
 
     @EventHandler
     public void on(PlayerJoinEvent e) {
@@ -21,14 +21,14 @@ public class RaiderPlayerRegistrar implements Listener {
 
     @EventHandler
     public void on(PlayerQuitEvent e) {
-        deregister(e.getPlayer());
+        deregister(e.getPlayer(), true);
     }
 
     /**
      * Register a player
      * @param player player
      */
-    public void register(Player player){
+    public static void register(Player player){
         if (players.containsKey(player.getUniqueId())) {
             Raiders.instance.getLogger().warning("Player " + player.getName() + " registered but was already registered!");
         }
@@ -42,28 +42,11 @@ public class RaiderPlayerRegistrar implements Listener {
     }
 
     /**
-     * Deregister player with saving
-     * @param player player
-     */
-    public void deregister(Player player){
-        deregister(player, true);
-    }
-
-    /**
-     * Deregister player without saving
-     * @param player player
-     */
-    public void deregisterForce(Player player){
-        deregister(player, false);
-    }
-
-
-    /**
      * Deregister a player
      * @param player player
      * @param save whether to save or not
      */
-    private void deregister(Player player, boolean save){
+    public static void deregister(Player player, boolean save){
         if (!players.containsKey(player.getUniqueId())) {
             Raiders.instance.getLogger().warning("Player " + player.getName() + " left but was not registered!");
         }
@@ -81,30 +64,21 @@ public class RaiderPlayerRegistrar implements Listener {
     /**
      * Reload player with saving
      * @param player player
+     * @param save whether to save before reloading or not
      */
-    public void reload(Player player) {
-        RaiderPlayer raiderPlayer = players.get(player.getUniqueId());
-        deregister(player);
-        register(player);
-    }
-
-    /**
-     * Reload player without saving
-     * @param player player
-     */
-    public void reloadForce(Player player) {
-        RaiderPlayer raiderPlayer = players.get(player.getUniqueId());
-        deregisterForce(player);
+    public static void reload(Player player, boolean save) {
+        deregister(player, save);
         register(player);
     }
 
     /**
      * Reload all players (saving first)
+     * @param save Whether to save players that are reloaded or not
      */
-    public void reloadAll() {
+    public static void reloadAll(boolean save) {
         Enumeration<UUID> keys = players.keys();
         while (keys.hasMoreElements()) {
-            reload(players.get(keys.nextElement()).getPlayer());
+            reload(players.get(keys.nextElement()).getPlayer(), save);
         }
     }
 }

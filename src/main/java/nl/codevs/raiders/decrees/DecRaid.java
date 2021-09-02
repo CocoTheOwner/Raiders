@@ -5,11 +5,11 @@ import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
 import nl.codevs.raiders.decree.objects.DecreeOrigin;
 import nl.codevs.raiders.decree.objects.Param;
 
-@Decree(name = "command", aliases = {"cmmd", "cmd", "cd"}, description = "Main commands")
+@Decree(name = "raiders", aliases = {"raider", "raids", "raid"}, description = "Main commands")
 public class DecRaid implements DecreeCommandExecutor {
 
     // This line is a category pointer
-    private SubCommandClass nameDoesNotMatterHere;
+    private DecAdminRaid decAdminRaid;
 
     @Decree(
             description = "Send hello!",
