@@ -32,8 +32,9 @@ public class Raiders extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(decreeSystem, this);
-        Bukkit.getPluginManager().registerEvents(new RaiderPlayerRegistrar(), this);
-        Bukkit.getServer().getOnlinePlayers().forEach(RaiderPlayerRegistrar::register);
+        Bukkit.getPluginManager().registerEvents(new RRaiderRegistrar(), this);
+        Bukkit.getServer().getOnlinePlayers().forEach(RRaiderRegistrar::register);
+        Bukkit.getLogger().info("Loaded " + RShopRegistrar.loadAll(true).size() + " shops");
     }
 
     @Override

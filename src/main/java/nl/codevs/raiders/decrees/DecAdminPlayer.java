@@ -1,14 +1,14 @@
 package nl.codevs.raiders.decrees;
 
-import nl.codevs.raiders.RaiderPlayerRegistrar;
+import nl.codevs.raiders.RRaiderRegistrar;
 import nl.codevs.raiders.decree.objects.Decree;
 import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
 import nl.codevs.raiders.decree.objects.Param;
 import org.bukkit.entity.Player;
 
 
-@Decree(name = "player", description = "Player registrar access")
-public class DecRaidAdminPlayer implements DecreeCommandExecutor {
+@Decree(name = "adminplayer", aliases = "ap", description = "Player registrar access")
+public class DecAdminPlayer implements DecreeCommandExecutor {
     @Decree(
             description = "Deregister a player from the Raider system"
     )
@@ -23,7 +23,7 @@ public class DecRaidAdminPlayer implements DecreeCommandExecutor {
             )
             boolean save
     ) {
-        RaiderPlayerRegistrar.deregister(player, save);
+        RRaiderRegistrar.deregister(player, save);
         success("Saved player data for " + player.getName() + "!");
     }
 
@@ -36,7 +36,7 @@ public class DecRaidAdminPlayer implements DecreeCommandExecutor {
             )
                     Player player
     ) {
-        RaiderPlayerRegistrar.register(player);
+        RRaiderRegistrar.register(player);
         success("Registered " + player.getName() + "!");
     }
 
@@ -54,7 +54,7 @@ public class DecRaidAdminPlayer implements DecreeCommandExecutor {
             )
                     boolean save
     ) {
-        RaiderPlayerRegistrar.reload(player, save);
+        RRaiderRegistrar.reload(player, save);
         success("Reloaded player " + player.getName() + "!");
     }
 
@@ -66,7 +66,7 @@ public class DecRaidAdminPlayer implements DecreeCommandExecutor {
             )
                     boolean save
     ) {
-        RaiderPlayerRegistrar.reloadAll(save);
+        RRaiderRegistrar.reloadAll(save);
         success("Reloaded all players!");
     }
 }

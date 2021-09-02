@@ -1,5 +1,7 @@
 package nl.codevs.raiders;
 
+import lombok.Getter;
+import nl.codevs.raiders.decree.util.KList;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,9 +12,10 @@ import java.util.Enumeration;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RaiderPlayerRegistrar implements Listener {
+public class RRaiderRegistrar implements Listener {
 
-    public static final ConcurrentHashMap<UUID, RaiderPlayer> players = new ConcurrentHashMap<>();
+    @Getter
+    private static final ConcurrentHashMap<UUID, RRaider> players = new ConcurrentHashMap<>();
 
     @EventHandler
     public void on(PlayerJoinEvent e) {
@@ -33,7 +36,7 @@ public class RaiderPlayerRegistrar implements Listener {
             Raiders.instance.getLogger().warning("Player " + player.getName() + " registered but was already registered!");
         }
         try {
-            players.put(player.getUniqueId(), RaiderPlayer.create(player));
+            players.put(player.getUniqueId(), RRaider.create(player));
             Raiders.instance.getLogger().info("Registered new player: " + player.getName());
             Raiders.instance.getLogger().info("Currently have " + players.size() + " registered players");
         } catch (Throwable e) {
