@@ -18,6 +18,7 @@
 
 package nl.codevs.raiders.decree;
 
+import lombok.Data;
 import nl.codevs.raiders.decree.exceptions.DecreeException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.handlers.*;
@@ -25,23 +26,27 @@ import nl.codevs.raiders.decree.objects.*;
 import nl.codevs.raiders.decree.util.AtomicCache;
 import nl.codevs.raiders.decree.util.C;
 import nl.codevs.raiders.decree.util.KList;
+import nl.codevs.raiders.decree.util.Maths;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
-    AtomicCache<DecreeVirtualCommand> commandCache = new AtomicCache<>();
-    ConcurrentHashMap<String, CompletableFuture<String>> futures = new ConcurrentHashMap<>();
-    KList<DecreeParameterHandler<?>> handlers = new KList<>(
+@Data
+public class DecreeSystem implements Listener {
+    private final AtomicCache<DecreeVirtualCommand> commandCache = new AtomicCache<>();
+    private final ConcurrentHashMap<String, CompletableFuture<String>> futures = new ConcurrentHashMap<>();
+    private static final KList<DecreeParameterHandler<?>> handlers = new KList<>(
             new BlockVectorHandler(),
             new BooleanHandler(),
             new ByteHandler(),
@@ -57,24 +62,31 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
     );
 
     /**
-     * The root class to start command searching from
+     * The root of the command tree as an instantiated class
      */
-    DecreeCommandExecutor getRootInstance();
+    private final DecreeCommandExecutor rootInstance;
 
     /**
-     * Before you fill out these functions. Read the README.md file in the decree directory.
-     *
-     * @return The instance of the plugin that is running Decree (literal 'this')
+     * The instance of the plugin
      */
-    Plugin instance();
+    private final Plugin instance;
 
     /**
-     * Whether the command system should send sounds
+     * Whether to use command sounds or not
      */
-    boolean doCommandSound();
+    private final boolean commandSound = true;
 
+    public DecreeSystem(DecreeCommandExecutor rootInstance, Plugin instance) {
+        this.rootInstance = rootInstance;
+        this.instance = instance;
+    }
+
+    /**
+     * Handles the cases where there are multiple options following from the entered command values
+     * @param e The event to check
+     */
     @EventHandler
-    default void on(PlayerCommandPreprocessEvent e)
+    public void on(PlayerCommandPreprocessEvent e)
     {
         String msg = e.getMessage().startsWith("/") ? e.getMessage().substring(1) : e.getMessage();
 
@@ -96,7 +108,7 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
      * @param password The password to access this future (appended to the onclick)
      * @param future The future to fulfill
      */
-    default void postFuture(String password, CompletableFuture<String> future) {
+    public void postFuture(String password, CompletableFuture<String> future) {
         futures.put(password, future);
     }
 
@@ -104,18 +116,18 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
      * What to do with debug messages
      * @param message The debug message
      */
-    default void debug(String message) {
+    public void debug(String message) {
         Bukkit.getConsoleSender().sendMessage(message);
     }
 
     /**
      * Get the root {@link DecreeVirtualCommand}
      */
-    default DecreeVirtualCommand getRoot() {
+    public DecreeVirtualCommand getRoot() {
         return commandCache.aquire(() -> {
             try {
                 //return new DecreeCategory(null, getRootInstance(), getRootInstance().getClass().getDeclaredAnnotation(Decree.class));
-                return DecreeVirtualCommand.createOrigin(getRootInstance(), getRootInstance().getClass().getDeclaredAnnotation(Decree.class), this);
+                return DecreeVirtualCommand.createOrigin(rootInstance, rootInstance.getClass().getDeclaredAnnotation(Decree.class), this);
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -124,19 +136,35 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
         });
     }
 
-    default List<String> decreeTabComplete(@NotNull CommandSender sender, @NotNull String[] args) {
-        KList<String> v = getRoot().invokeTabComplete(new KList<>(args), new DecreeSender(sender, instance(), this));
+
+    @Nullable
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull String[] args) {
+        KList<String> v = getRoot().invokeTabComplete(new KList<>(args), new DecreeSender(sender, getInstance(), this));
         v.removeDuplicates();
+        if (sender instanceof Player && isCommandSound()) {
+            ((DecreeSender) sender).playSound(Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.25f, Maths.frand(0.125f, 1.95f));
+        }
         return v;
     }
 
-    default boolean decreeCommand(@NotNull CommandSender sender, @NotNull String[] args) {
-        Bukkit.getScheduler().scheduleAsyncDelayedTask(instance(), () -> {
-            DecreeSender decreeSender = new DecreeSender(sender, instance(), this);
+    @SuppressWarnings("deprecation")
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull String[] args) {
+        Bukkit.getScheduler().scheduleAsyncDelayedTask(getInstance(), () -> {
+            DecreeSender decreeSender = new DecreeSender(sender, getInstance(), this);
             DecreeContext.touch(decreeSender);
 
-            if (!getRoot().invoke(decreeSender, new KList<>(args), new KList<>())) {
+            if (getRoot().invoke(decreeSender, new KList<>(args), new KList<>())) {
+                if (decreeSender.isPlayer()) {
+                    decreeSender.playSound(Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 0.77f, 1.65f);
+                    decreeSender.playSound(Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.125f, 2.99f);
+                }
+            } else {
                 sender.sendMessage(C.RED + "Unknown Decree Command");
+                if(decreeSender.isPlayer())
+                {
+                    decreeSender.playSound(Sound.BLOCK_ANCIENT_DEBRIS_BREAK, 1f, 0.25f);
+                    decreeSender.playSound(Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.2f, 1.95f);
+                }
             }
         });
         return true;
@@ -148,7 +176,7 @@ public interface DecreeSystem extends CommandExecutor, TabCompleter, Plugin {
      * @param type The type to handle
      * @return The corresponding {@link DecreeParameterHandler}, or null
      */
-    static DecreeParameterHandler<?> getHandler(Class<?> type) throws DecreeException {
+    public static DecreeParameterHandler<?> getHandler(Class<?> type) throws DecreeException {
         for (DecreeParameterHandler<?> i : handlers) {
             if (i.supports(type)) {
                 return i;

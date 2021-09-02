@@ -85,10 +85,9 @@ public class DecreeParameter {
     }
 
     /**
-     * TODO: Pull upstream because of potentially interfering {@link DecreeContextHandler}s
-     * @return
+     * TODO: Pull upwards because of potentially interfering {@link DecreeContextHandler}s
+     * @return Whether this parameter is required or not
      */
-    @Deprecated
     public boolean isRequired() {
         return !hasDefault();
     }

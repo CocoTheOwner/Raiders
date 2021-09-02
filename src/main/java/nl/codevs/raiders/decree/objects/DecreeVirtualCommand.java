@@ -19,10 +19,13 @@
 package nl.codevs.raiders.decree.objects;
 
 import lombok.Data;
-import nl.codevs.raiders.decree.*;
+import nl.codevs.raiders.decree.DecreeSender;
+import nl.codevs.raiders.decree.DecreeSystem;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
-import nl.codevs.raiders.decree.util.*;
+import nl.codevs.raiders.decree.util.C;
+import nl.codevs.raiders.decree.util.Form;
+import nl.codevs.raiders.decree.util.KList;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 
@@ -113,6 +116,10 @@ public class DecreeVirtualCommand implements Decreed {
     }
 
 
+    public boolean isNode() {
+        return getNode() != null;
+    }
+
     public String getName() {
         return isNode() ? getNode().getName() : getDecree().name();
     }
@@ -148,11 +155,6 @@ public class DecreeVirtualCommand implements Decreed {
 
         return d;
     }
-
-    public boolean isNode() {
-        return getNode() != null;
-    }
-
     public KList<String> invokeTabComplete(KList<String> args, DecreeSender sender) {
 
         if (isNode() || args.isEmpty() || args.size() <= 1 && !args.get(0).endsWith(" ")) {
@@ -347,14 +349,14 @@ public class DecreeVirtualCommand implements Decreed {
 
         for(String i : validOptions.convert(handler::toStringForce))
         {
-            sender.sendMessage( "<hover:show_text:'" + gradients[m%gradients.length] + i+"</gradient>'><click:run_command:/decreefuture "+ password + " " + i+">"+"- " + gradients[m%gradients.length] +   i         + "</gradient></click></hover>");
+            sender.sendMessage( "<hover:show_text:'" + gradients[m%gradients.length] + i+"</gradient>'><click:run_command:decreefuture "+ password + " " + i+">"+"- " + gradients[m%gradients.length] +   i         + "</gradient></click></hover>");
             m++;
         }
 
         CompletableFuture<String> future = new CompletableFuture<>();
         system.postFuture(password, future);
 
-        if(system.doCommandSound() && sender.isPlayer())
+        if(system.isCommandSound() && sender.isPlayer())
         {
             (sender.player()).playSound((sender.player()).getLocation(), Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 0.77f, 0.65f);
             (sender.player()).playSound((sender.player()).getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.125f, 1.99f);
@@ -362,7 +364,7 @@ public class DecreeVirtualCommand implements Decreed {
 
         try {
             return future.get(15, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
 
         }
 
@@ -482,7 +484,7 @@ public class DecreeVirtualCommand implements Decreed {
         };
 
         if (getNode().isSync()) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(system.instance(), rx);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(system.getInstance(), rx);
         } else {
             rx.run();
         }
