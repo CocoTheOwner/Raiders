@@ -9,7 +9,7 @@ import nl.codevs.raiders.decree.objects.Param;
 public class DecRaid implements DecreeCommandExecutor {
 
     // This line is a category pointer
-    private DecAdminRaid decAdminRaid;
+    private DecRaidAdmin decAdminRaid;
 
     @Decree(
             description = "Send hello!",
