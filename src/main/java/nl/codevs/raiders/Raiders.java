@@ -1,6 +1,7 @@
 package nl.codevs.raiders;
 
 import nl.codevs.raiders.decree.DecreeSystem;
+import nl.codevs.raiders.decree.util.KList;
 import nl.codevs.raiders.decrees.DecRaid;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -32,9 +33,6 @@ public class Raiders extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(decreeSystem, this);
-        Bukkit.getPluginManager().registerEvents(new RRaiderRegistrar(), this);
-        Bukkit.getServer().getOnlinePlayers().forEach(RRaiderRegistrar::register);
-        Bukkit.getLogger().info("Loaded " + RShopRegistrar.loadAll(true).size() + " shops");
     }
 
     @Override

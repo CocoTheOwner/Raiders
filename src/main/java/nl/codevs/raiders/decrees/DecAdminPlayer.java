@@ -1,6 +1,5 @@
 package nl.codevs.raiders.decrees;
 
-import nl.codevs.raiders.RRaiderRegistrar;
 import nl.codevs.raiders.decree.objects.Decree;
 import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
 import nl.codevs.raiders.decree.objects.Param;

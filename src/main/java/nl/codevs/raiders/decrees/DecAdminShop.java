@@ -1,8 +1,6 @@
 package nl.codevs.raiders.decrees;
 
-import nl.codevs.raiders.RItem;
-import nl.codevs.raiders.RShop;
-import nl.codevs.raiders.RShopRegistrar;
+import nl.codevs.raiders.Raiders;
 import nl.codevs.raiders.decree.objects.Decree;
 import nl.codevs.raiders.decree.objects.DecreeCommandExecutor;
 import nl.codevs.raiders.decree.objects.Param;
@@ -11,7 +9,7 @@ import nl.codevs.raiders.decree.objects.Param;
 public class DecAdminShop implements DecreeCommandExecutor {
     @Decree(description = "Reload all shops")
     public void reload() {
-        RShopRegistrar.saveAll();
+        Raiders.instance.shopRegistrar.saveAll();
         RShopRegistrar.loadAll(true);
     }
 

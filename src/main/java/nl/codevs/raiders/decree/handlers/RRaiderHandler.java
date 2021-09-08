@@ -1,8 +1,5 @@
 package nl.codevs.raiders.decree.handlers;
 
-import nl.codevs.raiders.RRaidRegistrar;
-import nl.codevs.raiders.RRaider;
-import nl.codevs.raiders.RRaiderRegistrar;
 import nl.codevs.raiders.decree.exceptions.DecreeParsingException;
 import nl.codevs.raiders.decree.exceptions.DecreeWhichException;
 import nl.codevs.raiders.decree.objects.DecreeParameterHandler;
